@@ -1259,6 +1259,7 @@
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.Entry.ToolTip">查看模组的依赖关系、缺失前置与内嵌（Jar-in-Jar）结构</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.Message">这里概览模组间的依赖关系与内嵌结构。禁用或删除模组时会提示受影响的依赖项。</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.ParsePending.Message">内嵌模组关系仍在后台解析，此时禁用或删除的连带依赖检测可能不完整，可能遗漏应一并处理的模组。是否仍要继续？</sys:String>
+    <sys:String x:Key="Instance.Resource.Mod.JarInJar.ParsePending.Incomplete">部分模组的内嵌信息尚未解析完成，为避免遗漏依赖关系，本次操作未执行。请稍后重试。</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.ParsePending.Title">模组仍在解析</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.Search.Hint">搜索模组：名称 / ModId / 依赖</sys:String>
     <sys:String x:Key="Instance.Resource.Mod.JarInJar.Section.Bundled">内嵌模组</sys:String>

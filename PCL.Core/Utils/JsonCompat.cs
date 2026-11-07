@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
@@ -54,7 +55,76 @@ public static class JsonCompat
 
     public static JsonNode ParseNode(string text)
     {
-        return JsonNode.Parse(text, NodeOptions, DocumentOptions)!;
+        try
+        {
+            return JsonNode.Parse(text, NodeOptions, DocumentOptions)!;
+        }
+        catch (JsonException)
+        {
+            // 少数模组清单（如部分版本的 fabric.mod.json）会在字符串里直接写换行等控制字符，
+            // 严格 JSON 会拒绝解析。转义字符串字面量内的控制字符后重试一次，避免整个文件被判为不可读。
+            var sanitized = EscapeControlCharsInStrings(text);
+            if (sanitized is null) throw;
+            return JsonNode.Parse(sanitized, NodeOptions, DocumentOptions)!;
+        }
+    }
+
+    /// <summary>
+    ///     把 JSON 字符串字面量内的裸控制字符转义为合法转义序列；无需修复时返回 <c>null</c>。
+    /// </summary>
+    /// <remarks>字符串外的内容原样保留，引号与已有转义序列的语义不变。</remarks>
+    private static string? EscapeControlCharsInStrings(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return null;
+
+        StringBuilder? builder = null;
+        var inString = false;
+        var escaped = false;
+        for (var i = 0; i < text.Length; i++)
+        {
+            var c = text[i];
+            if (!inString)
+            {
+                if (c == '"') inString = true;
+                builder?.Append(c);
+                continue;
+            }
+
+            if (escaped)
+            {
+                escaped = false;
+                builder?.Append(c);
+                continue;
+            }
+
+            switch (c)
+            {
+                case '\\':
+                    escaped = true;
+                    builder?.Append(c);
+                    continue;
+                case '"':
+                    inString = false;
+                    builder?.Append(c);
+                    continue;
+                case >= ' ':
+                    builder?.Append(c);
+                    continue;
+            }
+
+            builder ??= new StringBuilder(text.Length + 16).Append(text, 0, i);
+            builder.Append(c switch
+            {
+                '\n' => "\\n",
+                '\r' => "\\r",
+                '\t' => "\\t",
+                '\b' => "\\b",
+                '\f' => "\\f",
+                _ => "\\u" + ((int)c).ToString("x4", CultureInfo.InvariantCulture)
+            });
+        }
+
+        return builder?.ToString();
     }
 
     public static T? ToObject<T>(this JsonNode? node)

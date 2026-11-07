@@ -52,7 +52,9 @@ public static partial class LocalComp
             if (CompResourceListLoader.IsAbortedWithThread(loaderTaskId))
                 return;
 
-            allResolved = pending.All(mod => !mod.JijPending);
+            // 解析失败的项保留 pending 以便下次强制刷新重试，但已判定为内容损坏的不会再成功，
+            // 不能让损坏清单把整份列表永久卡在“未解析完成”而阻塞禁用与删除。
+            allResolved = pending.All(mod => !mod.JijPending || mod.JijFailed);
             if (allResolved)
                 JarInJarCache.Prune(allModPaths);
         }

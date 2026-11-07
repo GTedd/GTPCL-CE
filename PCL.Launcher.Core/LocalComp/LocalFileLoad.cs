@@ -17,6 +17,7 @@ public static partial class LocalComp
         private long? _jijExpectedLastModified;
         private long? _jijExpectedSize;
         private volatile bool _jijPending;
+        private volatile bool _jijFailed;
 
         public bool IsFileAvailable
         {
@@ -47,6 +48,12 @@ public static partial class LocalComp
         }
 
         internal bool JijPending => _jijPending;
+
+        /// <summary>
+        ///     本项的内嵌树是否已判定为无法解析（清单损坏等）。此类项重试也多半不会成功，
+        ///     不能让它永久阻塞整个实例的禁用/删除；后续强制刷新仍会再次尝试。
+        /// </summary>
+        internal bool JijFailed => _jijFailed;
         public string? JijLoader { get; internal set; }
         public string? JijTargetMcVersion { get; internal set; }
         public string? JijIdentifier { get; internal set; }
@@ -473,9 +480,14 @@ public static partial class LocalComp
                         _embeddedMods = tree;
 
                     if (tree is null || !complete)
+                    {
+                        // 清单损坏属于内容问题，重试也不会成功：标记为失败，避免永久阻塞禁用/删除
+                        _jijFailed = true;
                         return false;
+                    }
 
                     _jijPending = false;
+                    _jijFailed = false;
                     return true;
                 }
                 catch (OperationCanceledException)
@@ -485,6 +497,7 @@ public static partial class LocalComp
                 catch (Exception ex)
                 {
                     LauncherCommon.Log(ex, $"后台补解析内嵌模组失败（{path}）", LauncherLogLevel.Developer);
+                    _jijFailed = true;
                     return false;
                 }
                 finally

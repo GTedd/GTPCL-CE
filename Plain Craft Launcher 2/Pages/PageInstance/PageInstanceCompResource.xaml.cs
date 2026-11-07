@@ -1794,7 +1794,9 @@ public partial class PageInstanceCompResource : IRefreshable, IPageView, ILocalM
             JarInJarCache.UseInstance(PageInstanceLeft.McInstance?.PathInstance);
             LocalComp.jijScanContext = new JarInJar.ScanContext();
             foreach (var mod in output.Where(m => !m.IsFolder && m.JijPending))
-                completed &= mod.ResolveJijNow();
+                mod.ResolveJijNow();
+            // 解析失败的项只影响级联提示的完整性，不能让损坏清单卡死禁用/删除
+            completed = output.Where(m => !m.IsFolder && m.JijPending).All(m => m.JijFailed);
             if (completed)
             {
                 JarInJarCache.Prune(output.Where(m => !m.IsFolder).Select(m => m.path));
@@ -1810,7 +1812,7 @@ public partial class PageInstanceCompResource : IRefreshable, IPageView, ILocalM
         LocalComp.compJijResolved = completed;
         Launcher.frmInstanceModJarInJar?.OnJijResolved();
         if (!completed)
-            HintService.Show(Hints.Error(Lang.Text("Instance.Resource.Ed.ToggleFailed")));
+            HintService.Show(Hints.Error(Lang.Text("Instance.Resource.Mod.JarInJar.ParsePending.Incomplete")));
         return completed;
     }
 
@@ -1876,11 +1878,8 @@ public partial class PageInstanceCompResource : IRefreshable, IPageView, ILocalM
                     JarInJarCache.UseInstance(null);
                 }
                 if (!resolved)
-                {
-                    HintService.Show(Hints.Error(Lang.Text("Instance.Resource.Ed.ToggleFailed")));
-                    isSuccessful = false;
-                    continue;
-                }
+                    // 内嵌信息不可读只影响级联提示的完整性，模组本身的启用/禁用仍应照常进行
+                    Common.Log($"[Mod] 内嵌信息不可读，已跳过级联检查：{modEntity.path}", Common.LogLevel.Debug);
             }
             string newPath = null;
             if (modEntity.State == LocalComp.LocalCompFile.LocalFileStatus.Fine && !isEnable)
@@ -1936,6 +1935,8 @@ public partial class PageInstanceCompResource : IRefreshable, IPageView, ILocalM
             catch (Exception ex)
             {
                 Common.Log(ex, $"重命名 Mod 失败（{modEntity.path ?? "null"}）");
+                // 能读取却无法改名通常是文件被占用；把具体异常类型带回日志，避免用户只看提示无从判断
+                Common.Log($"[Mod] 重命名失败原因：{ex.GetType().Name} - {ex.Message}", Common.LogLevel.Debug);
                 isSuccessful = false;
                 continue;
             }
