@@ -297,11 +297,14 @@ public partial class PageInstanceOverall : IPageView
                 Title = Lang.Text("Instance.Overall.Name.EditTitle"),
                 Content = "",
                 DefaultValue = oldName ?? "",
-                ValidateRules = [new FolderNameValidator(GameFolders.mcFolderSelected + "versions", ignoreCase: false)],
+                ValidateRules = [new FolderNameValidator(GameFolders.mcFolderSelected + "versions", ignoreCase: false, exceptName: oldName)],
                 HighLight = false
             }).ConfigureAwait(true);
             var newName = newNameDialog.IsConfirmed ? newNameDialog.InputText : null;
             if (string.IsNullOrWhiteSpace(newName))
+                return;
+            // 名称未变化时无需走一遍重命名流程（校验已拦下重复名，这里只做兜底）
+            if (newName == oldName)
                 return;
             var newPath = Path.Combine(GameFolders.mcFolderSelected, "versions", newName);
             // 获取临时中间名，以防止仅修改大小写的重命名失败

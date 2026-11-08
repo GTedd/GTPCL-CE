@@ -190,6 +190,15 @@ public partial class MyMsgSelect
         Close();
     }
 
+    /// <summary>取消并关闭弹窗，供没有取消按钮时由 Esc 调用。</summary>
+    public void CloseAsCancel()
+    {
+        if (myDialog.IsClosed)
+            return;
+        myDialog.Close(DialogResult.Cancel);
+        Close();
+    }
+
     private void OnChecked(DialogOptionState state)
     {
         if (myDialog.MultiSelect)

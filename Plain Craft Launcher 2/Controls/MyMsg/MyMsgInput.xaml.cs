@@ -151,6 +151,18 @@ public partial class MyMsgInput
         Close();
     }
 
+    /// <summary>
+    ///     取消并关闭弹窗。即使没有显示「取消」按钮（单按钮模式）也一定可以关闭，
+    ///     用于让 Esc 在无取消按钮时仍能退出，而不是退化到受校验阻塞的「确定」。
+    /// </summary>
+    public void CloseAsCancel()
+    {
+        if (myDialog.IsClosed)
+            return;
+        myDialog.Close(new DialogResult(2));
+        Close();
+    }
+
     private void TextCaption_ValidateChanged(object sender, EventArgs e)
     {
         Btn1.IsEnabled = TextArea.IsValidated;

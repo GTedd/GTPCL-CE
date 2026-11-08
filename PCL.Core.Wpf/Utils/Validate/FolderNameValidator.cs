@@ -12,7 +12,8 @@ public class FolderNameValidator(
     string? parentFolder = null,
     bool useMinecraftCharCheck = true,
     bool ignoreCase = true,
-    bool ignoreSameNameInParentFolder = false)
+    bool ignoreSameNameInParentFolder = false,
+    string? exceptName = null)
     : FileSystemValidator
 {
     public FolderNameValidator() : this(null)
@@ -23,6 +24,9 @@ public class FolderNameValidator(
     public bool IgnoreCase { get; set; } = ignoreCase;
     public bool IgnoreSameNameInParentFolder { get; set; } = ignoreSameNameInParentFolder;
     public string? ParentFolder { get; set; } = parentFolder;
+
+    /// <summary>不参与重名检查的名称，用于重命名场景下允许保持原名。</summary>
+    public string? ExceptName { get; set; } = exceptName;
 
     private void _BuildRules()
     {
@@ -60,6 +64,9 @@ public class FolderNameValidator(
                 var dirInfo = new DirectoryInfo(ParentFolder);
                 if (!dirInfo.Exists) return true;
                 if (IgnoreSameNameInParentFolder) return true;
+                if (ExceptName is not null &&
+                    string.Equals(x, ExceptName, IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                    return true;
 
                 return !dirInfo
                     .EnumerateDirectories()

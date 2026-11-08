@@ -23,7 +23,8 @@ public abstract record DialogRequest
 {
     public required string Title { get; init; }
 
-    public DialogButtons Buttons { get; init; } = DialogButtons.Ok;
+    /// <summary>弹窗按钮。输入类弹窗默认提供「确定 / 取消」，避免用户无法退出。</summary>
+    public virtual DialogButtons Buttons { get; init; } = DialogButtons.Ok;
 
     public bool IsWarn { get; init; }
 
@@ -58,6 +59,9 @@ public sealed record InputDialogRequest : DialogRequest
     public string HintText { get; init; } = "";
 
     public IReadOnlyList<IValidator<string>> ValidateRules { get; init; } = [];
+
+    /// <summary>默认带取消按钮：输入弹窗必须随时可以放弃。</summary>
+    public override DialogButtons Buttons { get; init; } = DialogButtons.OkCancel;
 
     public override DialogKind Kind => DialogKind.Input;
 }

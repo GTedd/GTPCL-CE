@@ -751,10 +751,10 @@ public partial class FormMain
                 {
                     MyMsgInput input => input.Btn2.Visibility == Visibility.Visible
                         ? () => input.Btn2_Click(sender, null)
-                        : () => input.Btn1_Click(sender, null),
+                        : () => input.CloseAsCancel(),
                     MyMsgSelect select => select.Btn2.Visibility == Visibility.Visible
                         ? () => select.Btn2_Click(sender, null)
-                        : () => select.Btn1_Click(sender, null),
+                        : () => select.CloseAsCancel(),
                     MyMsgText text => text.Btn3.Visibility == Visibility.Visible
                         ? () => text.Btn3_Click(sender, null)
                         : text.Btn2.Visibility == Visibility.Visible

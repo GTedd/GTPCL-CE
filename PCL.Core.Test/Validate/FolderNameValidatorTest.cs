@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PCL.Core.Utils.Validate;
 
@@ -29,5 +31,26 @@ public class FolderNameValidatorTest
             }
         }
         Assert.AreEqual(expected, result.IsValid);
+    }
+
+    [TestMethod]
+    public void ExceptNameAllowsKeepingOriginalName()
+    {
+        var parent = Path.Combine(Path.GetTempPath(), "pcl-fnv-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.Combine(parent, "MyInstance"));
+        try
+        {
+            // 不带 ExceptName 时，保持原名会被判为重复
+            Assert.IsFalse(new FolderNameValidator(parent).Validate("MyInstance").IsValid);
+            // 带 ExceptName 时，保持原名应当通过（重命名弹窗的默认值场景）
+            Assert.IsTrue(new FolderNameValidator(parent, exceptName: "MyInstance").Validate("MyInstance").IsValid);
+            // 其它已存在的名字仍然被判为重复
+            Directory.CreateDirectory(Path.Combine(parent, "Other"));
+            Assert.IsFalse(new FolderNameValidator(parent, exceptName: "MyInstance").Validate("Other").IsValid);
+        }
+        finally
+        {
+            Directory.Delete(parent, true);
+        }
     }
 }
