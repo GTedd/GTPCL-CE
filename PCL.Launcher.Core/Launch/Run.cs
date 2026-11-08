@@ -331,7 +331,7 @@ public static partial class GameLaunch
                     'F'
                 ),
                 mcLaunchJavaSelected!.Installation.MajorVersion > 8
-                    ? Encoding.UTF8
+                    ? new UTF8Encoding(false) // 不写 BOM：带 BOM 的 .bat 首行会被 cmd.exe 读成乱码
                     : Encoding.Default);
             if (currentLaunchOptions.SaveBatch is null)
                 return false;

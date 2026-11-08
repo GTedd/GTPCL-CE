@@ -39,6 +39,11 @@ public static class LauncherCommon
         string? title,
         string? userSummary);
 
+    /// <summary>UTF-8 且不写 BOM 的编码实例。写任何 Minecraft 会读取的文本文件都必须用它。</summary>
+    private static readonly UTF8Encoding Utf8NoBom = new(false);
+
+    private static readonly Lock WriteIniLock = new();
+
     public static LauncherLogHandler? UiLogHandler { get; set; }
 
     /// <summary>是否处于调试模式，由宿主同步。</summary>
@@ -218,31 +223,63 @@ public static class LauncherCommon
         return defaultValue;
     }
 
+    /// <summary>
+    ///     以 UTF-8（<b>无 BOM</b>）写入 ini 文件的单个键；值未变化时不落盘，<paramref name="value" /> 为 <c>null</c> 时删除该键。
+    /// </summary>
+    /// <remarks>
+    ///     严禁改回 <see cref="Encoding.UTF8" />：该编码写入时会带 BOM，而 Minecraft 的
+    ///     <c>net.minecraft.client.Options#load</c> 使用不剥离 BOM 的 UTF-8 Reader 逐行解析，
+    ///     首行键名会被污染成 <c>"\uFEFFversion"</c>，导致版本号读不到而按 0 处理，
+    ///     整套 DataFixer 从最老版本重跑（<c>OptionsKeyLwjgl3Fix</c> 会把已是字符串形式的
+    ///     <c>key_key.*</c> 值交给 <c>Integer.parseInt</c> 并抛异常），最终整份设置被判为无效、
+    ///     回落到默认值并被覆盖保存——表现为「每次启动游戏设置都被重置」。
+    /// </remarks>
     public static void WriteIni(string fileName, string key, string? value)
     {
         try
         {
-            var content = new Dictionary<string, string>(StringComparer.Ordinal);
-            if (File.Exists(fileName))
-                foreach (var line in File.ReadAllLines(fileName))
+            if (key.Contains(":"))
+                throw new Exception($"尝试写入 ini 文件 {fileName} 的键名中包含了冒号：{key}");
+            key = key.Replace("\r", "").Replace("\n", "");
+            value = value?.Replace("\r", "").Replace("\n", "");
+
+            lock (WriteIniLock)
+            {
+                var content = new Dictionary<string, string>(StringComparer.Ordinal);
+                var hasBom = false;
+                if (File.Exists(fileName))
                 {
-                    var index = line.IndexOf(':');
-                    if (index > 0) content[line[..index]] = line[(index + 1)..];
+                    var rawBytes = File.ReadAllBytes(fileName);
+                    hasBom = rawBytes.Length >= 3 && rawBytes[0] == 0xEF && rawBytes[1] == 0xBB && rawBytes[2] == 0xBF;
+                    // File.ReadAllLines 会自动剥离 BOM，因此这里的键名是干净的
+                    foreach (var line in File.ReadAllLines(fileName))
+                    {
+                        var index = line.IndexOf(":");
+                        if (index > 0) content[line[..index]] = line[(index + 1)..];
+                    }
                 }
 
-            if (value is null) content.Remove(key);
-            else content[key] = value;
+                if (value is null)
+                {
+                    if (!content.Remove(key) && !hasBom) return;
+                }
+                else
+                {
+                    // 值未变化则不落盘：避免无谓的重写整个文件、也避免改动文件时间戳
+                    // 例外：文件仍带 BOM 时必须重写一次，否则历史遗留的 BOM 永远不会被清掉，MC 会继续读到污染的首行
+                    if (!hasBom && content.TryGetValue(key, out var oldValue) && oldValue == value) return;
+                    content[key] = value;
+                }
 
-            var directory = Path.GetDirectoryName(fileName);
-            if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
-            File.WriteAllLines(
-                fileName,
-                content.Select(pair => $"{pair.Key}:{pair.Value}"),
-                Encoding.UTF8);
+                WriteFile(
+                    fileName,
+                    string.Join("\r\n", content.Select(pair => $"{pair.Key}:{pair.Value}")) + "\r\n",
+                    Utf8NoBom);
+            }
         }
-        catch
+        catch (Exception ex)
         {
-            // ignored
+            Log(ex, $"写入 ini 文件失败（{fileName} → {key}:{value}）", LauncherLogLevel.Debug);
         }
     }
 
@@ -541,7 +578,8 @@ public static class LauncherCommon
     {
         var directory = Path.GetDirectoryName(filePath);
         if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
-        File.WriteAllText(filePath, content, encoding ?? Encoding.UTF8);
+        // 默认使用不带 BOM 的 UTF-8：带 BOM 的文本会让不剥离 BOM 的读取方（如 Minecraft）解析出错
+        File.WriteAllText(filePath, content, encoding ?? Utf8NoBom);
     }
 
     public static void WriteFile(string filePath, Stream stream)
