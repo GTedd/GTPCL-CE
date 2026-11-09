@@ -34,7 +34,14 @@ public partial class PageDownloadCompDetail : IPageView
 
     public void OnNavigatedTo(object? parameter) => RefreshOnNavigate();
 
-    public void OnNavigatedFrom() { }
+    public void OnNavigatedFrom()
+    {
+        // 页面离开时立即复位刷新标记。
+        // 详情页 → 前置详情页是同一个页面实例，PageChangeAnim 重新挂载时 Child 引用没变，
+        // WPF 不会触发 Unloaded，只靠 Unloaded 复位会让 _refreshed 永远为 true，
+        // 于是 OnNavigatedTo 直接返回，表现为“有切换动画但内容不变”。
+        _refreshed = false;
+    }
 
     private void RefreshOnNavigate()
     {
