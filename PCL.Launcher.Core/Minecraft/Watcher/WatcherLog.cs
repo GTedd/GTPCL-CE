@@ -81,16 +81,18 @@ public static partial class GameWatcher
             try
             {
                 var pendingLogs = TakePendingLogs();
-                if (pendingLogs is null)
-                    return;
+                if (pendingLogs is not null)
+                {
+                    foreach (var line in pendingLogs)
+                        GameLog(line);
 
-                foreach (var line in pendingLogs)
-                    GameLog(line);
+                    if (State == MinecraftState.Loading)
+                        ProgressUpdate();
+                }
 
-                if (State == MinecraftState.Loading)
-                    ProgressUpdate();
-
-                if (!gameProcess.HasExited)
+                // 即使这一轮没有新的日志输出，也必须检查进程是否已经退出，
+                // 否则游戏关闭后监控循环会一直卡在运行状态（关闭按钮不消失、崩溃不提示）
+                if (!CheckProcessExit(pendingLogs is not null))
                     return;
 
                 HandleMinecraftProcessExit();
@@ -103,6 +105,43 @@ public static partial class GameWatcher
                     LauncherLogLevel.Feedback,
                     userSummary: Lang.Text("Minecraft.Launch.Error.WatcherOperationFailed"));
             }
+        }
+
+        // 进程退出后，等待标准输出流把剩余日志刷完的最长时间
+        private const int ProcessExitLogDrainMs = 300;
+        private DateTime _processExitFirstSeen = DateTime.MinValue;
+        private bool _processExitHandled;
+
+        /// <summary>
+        ///     检查游戏进程是否已经退出，并在日志流读完后返回 true。
+        /// </summary>
+        /// <param name="hasNewLogs">本轮是否取到了新的日志行。</param>
+        private bool CheckProcessExit(bool hasNewLogs)
+        {
+            if (_processExitHandled)
+                return false;
+
+            if (!gameProcess.HasExited)
+            {
+                _processExitFirstSeen = DateTime.MinValue;
+                return false;
+            }
+
+            if (hasNewLogs)
+            {
+                // 进程已退出但标准输出仍在推送日志，说明还有内容没读完，重新计时
+                _processExitFirstSeen = DateTime.UtcNow;
+                return false;
+            }
+
+            if (_processExitFirstSeen == DateTime.MinValue)
+                _processExitFirstSeen = DateTime.UtcNow;
+
+            if ((DateTime.UtcNow - _processExitFirstSeen).TotalMilliseconds < ProcessExitLogDrainMs)
+                return false;
+
+            _processExitHandled = true;
+            return true;
         }
 
         private List<string>? TakePendingLogs()
