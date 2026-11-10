@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using System;
 using System.Windows;
+using System.Windows.Threading;
 using PCL.Core.UI.Hints;
 
 namespace PCL;
@@ -27,8 +29,14 @@ public sealed class HintPresenter : IHintPresenter
         main.PanHint.Margin = new Thickness(0, 0, 0, extraHeight > 0 ? extraHeight + 20 : 20);
 
         var toast = new MyToast(hint);
+        // 延迟显示期间控件已经进了可视树，先把透明度压到 0，避免闪一帧完整样式再回缩。
+        toast.Opacity = 0;
         main.PanHint.Children.Add(toast);
-        toast.Show();
+
+        // 构建 toast 模板、测量文本、挂动画都要占用 UI 线程。
+        // 这里通常正好是下载刚结束、主界面忙于刷新任务条的时刻，同步做完会让界面明显顿一下，
+        // 所以推迟到布局与渲染之后再做，让提示单独占一帧。
+        main.Dispatcher.BeginInvoke(new Action(toast.Show), DispatcherPriority.Loaded);
     }
 
     public void Dismiss(HintViewModel hint)
