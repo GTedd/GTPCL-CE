@@ -40,8 +40,53 @@ public static class MojangUtils
                 }
                 ), Encoding.UTF8, "application/json")
             ).SendAsync(cancellationToken: token).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // 403 的具体原因（如 XSTS 校验失败、账号无 Java 版授权）在响应体里，
+            // 直接 EnsureSuccessStatusCode 只会得到一句“403 Forbidden”，无法排查。
+            var detail = await ReadErrorDetailAsync(response, token).ConfigureAwait(false);
+            throw new IdentityModelAuthenticationException(
+                "minecraft_authentication_failed",
+                $"Minecraft 登录被拒绝（HTTP {(int)response.StatusCode}）：{detail}");
+        }
+
         return await response.AsJsonAsync<MojangResponse>(cancellationToken: token).ConfigureAwait(false);
+    }
+
+    /// <summary>尽量从失败的响应里取出可读的错误说明，取不到时返回状态码描述。</summary>
+    private static async Task<string> ReadErrorDetailAsync(HttpResponseMessage response, CancellationToken token)
+    {
+        try
+        {
+            var body = await response.Content.ReadAsStringAsync(token).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(body))
+                return response.StatusCode.ToString();
+
+            // 常见格式：{"path":"/authentication/login_with_xbox","errorMessage":"..."}
+            using var doc = JsonDocument.Parse(body);
+            var root = doc.RootElement;
+            if (root.ValueKind == JsonValueKind.Object)
+            {
+                if (root.TryGetProperty("errorMessage", out var msg) && msg.ValueKind == JsonValueKind.String)
+                    return msg.GetString() ?? body;
+                if (root.TryGetProperty("error", out var err))
+                {
+                    if (err.ValueKind == JsonValueKind.String)
+                        return err.GetString() ?? body;
+                    if (err.ValueKind == JsonValueKind.Object
+                        && err.TryGetProperty("message", out var inner)
+                        && inner.ValueKind == JsonValueKind.String)
+                        return inner.GetString() ?? body;
+                }
+            }
+
+            return body.Length > 500 ? body[..500] : body;
+        }
+        catch
+        {
+            return response.StatusCode.ToString();
+        }
     }
 
     /// <summary>
