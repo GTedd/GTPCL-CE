@@ -540,10 +540,20 @@ public static partial class Comp
     {
         var realResults = new List<CompProject>();
 
+        // 某个源一旦请求失败，本次搜索就不再向它发请求：403 之类的硬失败重试也不会成功，
+        // 继续请求只会在每页都多等一轮超时，还会反复刷错误提示。
+        var curseForgeDead = false;
+        var modrinthDead = false;
+
         while (true)
         {
             var rawResults = new List<CompProject>();
-            Exception? lastError = null;
+            // 两个源必须各自记录错误，不能共用一个变量：后完成的任务会覆盖先完成者的结果。
+            // 之前共用 lastError 时，Modrinth 成功返回 null 会把 CurseForge 的失败抹掉，
+            // 于是循环误判为「还能继续」并再次请求已经失败的源，最后只剩失败源时才抛异常，
+            // 把已经拿到的另一个源的搜索结果整页丢弃。
+            Exception? curseForgeError = null;
+            Exception? modrinthError = null;
             var resultsLock = new object();
 
             // 1.14- 的 Forge 老 Mod 常常没有声明自己支持的加载器，因此查询时不带加载器条件，
@@ -560,11 +570,11 @@ public static partial class Comp
 
             var tasks = new List<Task>();
 
-            if (curseForgeUrl is not null)
+            if (curseForgeUrl is not null && !curseForgeDead)
                 tasks.Add(
                     Task.Run(() =>
                     {
-                        lastError = _FetchCurseForgePage(
+                        curseForgeError = _FetchCurseForgePage(
                             curseForgeUrl,
                             request,
                             storage,
@@ -572,11 +582,11 @@ public static partial class Comp
                             resultsLock);
                     }));
 
-            if (modrinthUrl is not null)
+            if (modrinthUrl is not null && !modrinthDead)
                 tasks.Add(
                     Task.Run(() =>
                     {
-                        lastError = _FetchModrinthPage(
+                        modrinthError = _FetchModrinthPage(
                             modrinthUrl,
                             storage,
                             rawResults,
@@ -594,10 +604,36 @@ public static partial class Comp
                         p.ModLoaders.Count == 0 || p.ModLoaders.Contains(CompLoaderType.Forge))
                 ];
 
+            // 记录本轮的源状态，下一轮据此决定是否继续请求。
+            // 同时把该源的 total 归零，否则翻页按钮会一直认为还有下一页。
+            if (curseForgeError is not null)
+            {
+                curseForgeDead = true;
+                storage.curseForgeTotal = 0;
+            }
+
+            if (modrinthError is not null)
+            {
+                modrinthDead = true;
+                storage.modrinthTotal = 0;
+            }
+            // 单个源不可用但仍拿到了另一个源的结果时，不抛异常打断整页，
+            // 而是记下提示交给界面显示（CurseForge 无 Key 或被墙时非常常见）。
+            if (curseForgeDead && !modrinthDead)
+                storage.errorMessage = Lang.Text("Download.Comp.List.Source.CurseForgeUnavailable");
+            else if (modrinthDead && !curseForgeDead)
+                storage.errorMessage = Lang.Text("Download.Comp.List.Source.ModrinthUnavailable");
+
             if (rawResults.Count == 0)
             {
-                if (lastError is not null) throw lastError;
-                throw new Exception(Lang.Text("Download.Comp.List.NoResultsSimple"));
+                // 全部可用源都失败时才让整次搜索失败；只要还有一个源能返回结果就继续。
+                if (curseForgeDead && modrinthDead)
+                    throw curseForgeError ?? modrinthError!;
+                if (realResults.Count + storage.results.Count == 0)
+                    throw (curseForgeError ?? modrinthError)
+                          ?? new Exception(Lang.Text("Download.Comp.List.NoResultsSimple"));
+                LogWrapper.Info("[Comp] 本轮没有任何新结果，退出加载");
+                break;
             }
 
             var processedResults = rawResults
@@ -611,7 +647,7 @@ public static partial class Comp
 
             if (realResults.Count + storage.results.Count < request.targetResultCount
                 && request.CanContinue
-                && lastError is null)
+                && !(curseForgeDead && modrinthDead))
             {
                 LogWrapper.Info("[Comp] 数量不足，继续加载下一页");
                 continue;
@@ -653,7 +689,10 @@ public static partial class Comp
         }
         catch (Exception ex)
         {
-            LogWrapper.Error(ex, "CurseForge 获取失败");
+            // 用 Warn 而非 Error：Error 会弹出全局提示条，而两个源是互补的，
+            // 一个源挂掉但另一个能出结果属于可降级情况，不该用红条打断用户。
+            // 真正的提示会通过 storage.errorMessage 显示在列表顶部。
+            LogWrapper.Warn(ex, "CurseForge 获取失败");
             return ex;
         }
     }
@@ -683,7 +722,7 @@ public static partial class Comp
         }
         catch (Exception ex)
         {
-            LogWrapper.Error(ex, "Modrinth 获取失败");
+            LogWrapper.Warn(ex, "Modrinth 获取失败");
             return ex;
         }
     }
