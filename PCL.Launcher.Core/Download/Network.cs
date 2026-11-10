@@ -5,6 +5,13 @@ using PCL.Network;
 
 namespace PCL;
 
+/// <summary>
+///     CurseForge 接口返回 403/401 时抛出。
+///     常见原因是构建时未提供有效的 API Key，或 Key 没有 mods 接口的权限。
+/// </summary>
+public sealed class CurseForgeUnavailableException()
+    : Exception(Lang.Text("Download.Comp.Error.CurseForgeUnavailable"));
+
 public static partial class GameDownload
 {
     private static readonly string[] SourceArray = ["minecraftforge", "fabricmc", "neoforged"];
@@ -19,6 +26,22 @@ public static partial class GameDownload
     /// <summary>
     ///     获取版本列表（而非下载文件）的时候，是否优先使用官方源。
     /// </summary>
+    /// <summary>判断请求是否指向 CurseForge 的官方 API。</summary>
+    private static bool IsCurseForgeApi(string url)
+    {
+        return url.Contains("api.curseforge.com", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>判断异常是否由 HTTP 403/401 引起（各家请求实现抛出的异常文案不一致，做宽松匹配）。</summary>
+    private static bool IsForbidden(Exception ex)
+    {
+        var message = ex.ToString();
+        return message.Contains("403", StringComparison.Ordinal)
+               || message.Contains("401", StringComparison.Ordinal)
+               || message.Contains("Forbidden", StringComparison.OrdinalIgnoreCase)
+               || message.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase);
+    }
+
     public static bool DlVersionListPreferMojang =>
         Config.Download.VersionListSource == 2
         || (Config.Download.VersionListSource == 1 && DownloadSources.PreferMojang);
@@ -36,7 +59,7 @@ public static partial class GameDownload
             {
                 case 0:
                 {
-                    urls.Add(new KeyValuePair<string, int>(mcimUrl, 5));
+                    // 优先镜像：镜像不需要 API Key，失败后再退回官方直连。
                     urls.Add(new KeyValuePair<string, int>(mcimUrl, 10));
                     urls.Add(new KeyValuePair<string, int>(url, 15));
                     break;
@@ -76,7 +99,15 @@ public static partial class GameDownload
             }
             catch (Exception ex)
             {
-                if (!ex.Message.ContainsF("mcimirror")) exs += $"{ex.Message}\r\n";
+                if (!ex.Message.ContainsF("mcimirror"))
+                {
+                    // CurseForge 返回 403 通常是构建时没有有效的 API Key，
+                    // 直接把原始异常抛给用户会显示成 “403 Forbidden) The operation was canceled”，
+                    // 这里统一换成能指导用户换源的提示。
+                    if (IsCurseForgeApi(url) && IsForbidden(ex))
+                        throw new CurseForgeUnavailableException();
+                    exs += $"{ex.Message}\r\n";
+                }
             }
 
         throw new Exception(exs);
@@ -115,7 +146,7 @@ public static partial class GameDownload
             {
                 case 0:
                 {
-                    urls.Add(new KeyValuePair<string, int>(mcimUrl, 5));
+                    // 优先镜像：镜像不需要 API Key，失败后再退回官方直连。
                     urls.Add(new KeyValuePair<string, int>(mcimUrl, 10));
                     urls.Add(new KeyValuePair<string, int>(url, 15));
                     break;
@@ -157,7 +188,12 @@ public static partial class GameDownload
             }
             catch (Exception ex)
             {
-                if (!ex.Message.ContainsF("mcimirror")) exs += $"{ex.Message}\r\n";
+                if (!ex.Message.ContainsF("mcimirror"))
+                {
+                    if (IsCurseForgeApi(url) && IsForbidden(ex))
+                        throw new CurseForgeUnavailableException();
+                    exs += $"{ex.Message}\r\n";
+                }
             }
 
         throw new Exception(exs);
