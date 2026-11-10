@@ -75,48 +75,70 @@ public static partial class CompDependency
                 ?? [];
             var loaders = ToLoaderNames(localFile.CompFile?.ModLoaders);
 
-            if (!string.IsNullOrWhiteSpace(localFile.Comp?.Id)
-                && !string.IsNullOrWhiteSpace(source))
+            // 本地 jar 多半没有联网缓存，此时靠 Mod ID、内嵌提供者与主页 slug 认出“已经装过的是谁”。
+            var identity = new InstalledModIdentity
             {
-                result.Add(
-                    new InstalledModIdentity
-                    {
-                        SourceProjectId = localFile.Comp.Id,
-                        Source = source,
-                        ModId = localFile.ModId,
-                        GameVersions = gameVersions,
-                        Loaders = loaders
-                    });
-                continue;
-            }
+                SourceProjectId = localFile.Comp?.Id ?? localFile.CompFile?.ProjectId,
+                Source = localFile.Comp is not null
+                    ? source
+                    : localFile.CompFile is not null
+                        ? GetSource(localFile.CompFile.FromCurseForge)
+                        : null,
+                ModId = localFile.ModId,
+                FileName = localFile.RawFileName,
+                Version = localFile.Version,
+                SlugCandidates = CollectSlugCandidates(localFile),
+                GameVersions = gameVersions,
+                Loaders = loaders
+            };
 
-            if (!string.IsNullOrWhiteSpace(localFile.CompFile?.ProjectId))
+            if (string.IsNullOrWhiteSpace(identity.SourceProjectId))
             {
-                var fileSource = GetSource(localFile.CompFile.FromCurseForge);
-                result.Add(
-                    new InstalledModIdentity
-                    {
-                        SourceProjectId = localFile.CompFile.ProjectId,
-                        Source = fileSource,
-                        ModId = localFile.ModId,
-                        GameVersions = gameVersions,
-                        Loaders = loaders
-                    });
-                continue;
-            }
-
-            result.Add(
-                new InstalledModIdentity
+                identity = identity with
                 {
                     SourceProjectId = null,
-                    Source = null,
-                    ModId = localFile.ModId,
-                    GameVersions = gameVersions,
-                    Loaders = loaders
-                });
+                    Source = null
+                };
+            }
+
+            result.Add(identity);
         }
 
         return result;
+    }
+
+    /// <summary>收集可用来和工程短名比对的本地标识：Mod ID、内嵌提供的 ID、主页 URL 的最后一段。</summary>
+    private static List<string> CollectSlugCandidates(LocalCompFile localFile)
+    {
+        var candidates = new List<string>();
+
+        AddCandidate(candidates, localFile.ModId);
+        foreach (var providedId in localFile.ProvidedIds)
+            AddCandidate(candidates, providedId);
+
+        // 主页 URL 只在 Modrinth / CurseForge 上取最后一段作为 slug，
+        // 其它站点（如 GitHub 仓库名）与工程短名并不等价，拿去比对会误判。
+        var url = localFile.Url;
+        if (!string.IsNullOrWhiteSpace(url))
+        {
+            var trimmed = url.TrimEnd('/');
+            if (trimmed.Contains("modrinth.com", StringComparison.OrdinalIgnoreCase)
+                || trimmed.Contains("curseforge.com", StringComparison.OrdinalIgnoreCase))
+            {
+                var lastSlash = trimmed.LastIndexOf('/');
+                if (lastSlash >= 0 && lastSlash + 1 < trimmed.Length)
+                    AddCandidate(candidates, trimmed[(lastSlash + 1)..]);
+            }
+        }
+
+        return candidates;
+
+        static void AddCandidate(List<string> list, string? value)
+        {
+            var normalized = ModDependencyResolver.NormalizeIdentity(value);
+            if (normalized.Length >= 3 && !list.Contains(normalized))
+                list.Add(normalized);
+        }
     }
 
     public static ModDependencyProject? ResolveProjectFiles(string source, string projectId)
@@ -138,6 +160,7 @@ public static partial class CompDependency
             ProjectId = compProject.Id,
             Source = source,
             ProjectName = compProject.TranslatedName ?? compProject.RawName,
+            Slug = compProject.Slug,
             Files =
             [
                 .. files.Select(compFile => new ModDependencyFile

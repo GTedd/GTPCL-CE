@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace PCL.Core.Minecraft.ResourceProject;
 
@@ -25,6 +26,10 @@ public sealed record class ModDependencyProject
     public string ProjectId { get; init; } = string.Empty;
     public string Source { get; init; } = string.Empty;
     public string? ProjectName { get; init; }
+
+    /// <summary>工程短名（例如 <c>forge-config-api-port</c>），用于与本地 Mod 的自述标识比对。</summary>
+    public string? Slug { get; init; }
+
     public List<ModDependencyFile> Files { get; init; } = [];
 }
 
@@ -42,9 +47,23 @@ public sealed record class ModDependencyFile
 
 public sealed record class InstalledModIdentity
 {
+    /// <summary>由 PCL 联网缓存识别出的工程 ID；本地文件未经联网识别时为 null。</summary>
     public string? SourceProjectId { get; init; }
     public string? Source { get; init; }
+
+    /// <summary>Mod 自述的 ID（fabric.mod.json 的 id、mods.toml 的 modId 等）。</summary>
     public string? ModId { get; init; }
+
+    /// <summary>本地文件名，用于与将要下载的文件名比对。</summary>
+    public string? FileName { get; init; }
+
+    /// <summary>Mod 自述的版本号。</summary>
+    public string? Version { get; init; }
+
+    /// <summary>可用来与工程短名比对的候选标识（Mod ID、主页 URL 中的 slug 等）。</summary>
+    public List<string> SlugCandidates { get; init; } = [];
+
+    /// <summary>已知的兼容游戏版本；本地 jar 通常为空，此时退化为约束判定。</summary>
     public List<string> GameVersions { get; init; } = [];
     public List<string> Loaders { get; init; } = [];
 }
@@ -135,6 +154,13 @@ public sealed class ModDependencyResolver
             return;
         }
 
+        // 本地 Mod 常没有联网标识（SourceProjectId 为空），此时用工程短名 / Mod ID 兜底认定“已装”。
+        if (context.IsInstalledByAlias(project))
+        {
+            context.AddSatisfied(project.ProjectId, project.Source, "Already installed (matched by local mod identity).");
+            return;
+        }
+
         var selectedFile = SelectBestFile(project.Files, context.TargetMinecraftVersion, context.TargetLoaders);
         if (selectedFile is null)
         {
@@ -199,6 +225,22 @@ public sealed class ModDependencyResolver
         return file.Loaders.Any(loader => targetLoaders.Contains(loader));
     }
 
+    /// <summary>把 slug / Mod ID 归一为只含小写字母数字的形式，抹平 <c>-</c>、<c>_</c> 与大小写差异。</summary>
+    public static string NormalizeIdentity(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return string.Empty;
+
+        var builder = new StringBuilder(value.Length);
+        foreach (var ch in value)
+        {
+            if (char.IsLetterOrDigit(ch))
+                builder.Append(char.ToLowerInvariant(ch));
+        }
+
+        return builder.ToString();
+    }
+
     private static int NormalizeReleaseType(int releaseType)
     {
         return releaseType switch
@@ -247,6 +289,48 @@ public sealed class ModDependencyResolver
                 && Comparer.Equals(installed.Source, source)
                 && installed.GameVersions.Any(version => Comparer.Equals(version, TargetMinecraftVersion))
                 && LoadersCompatible(installed.Loaders));
+        }
+
+        /// <summary>
+        ///     本地 Mod 往往没有 PCL 的联网标识，<see cref="IsInstalledCompatible" /> 会一律判为未安装。
+        ///     这里改用工程短名与 Mod 自述标识比对，认定同一个前置是否已经在目标目录中。
+        /// </summary>
+        public bool IsInstalledByAlias(ModDependencyProject project)
+        {
+            var projectKeys = new List<string>();
+            AddKey(projectKeys, project.Slug);
+            AddKey(projectKeys, project.ProjectId);
+            if (projectKeys.Count == 0)
+                return false;
+
+            foreach (var installed in Request.InstalledMods)
+            {
+                if (!LoadersCompatible(installed.Loaders))
+                    continue;
+
+                // 文件已声明版本却不含目标版本时，交给后续流程重新下载兼容版本。
+                if (installed.GameVersions.Count > 0
+                    && !installed.GameVersions.Any(version => Comparer.Equals(version, TargetMinecraftVersion)))
+                    continue;
+
+                var installedKeys = new List<string>();
+                AddKey(installedKeys, installed.SourceProjectId);
+                AddKey(installedKeys, installed.ModId);
+                foreach (var candidate in installed.SlugCandidates)
+                    AddKey(installedKeys, candidate);
+
+                if (installedKeys.Any(projectKeys.Contains))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static void AddKey(List<string> keys, string? value)
+        {
+            var normalized = NormalizeIdentity(value);
+            if (normalized.Length >= 3 && !keys.Contains(normalized))
+                keys.Add(normalized);
         }
 
         public void AddInstall(ModDependencyProject project, ModDependencyFile file)

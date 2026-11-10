@@ -284,6 +284,118 @@ public class ModDependencyResolverTest
         Assert.AreEqual(0, result.Unresolved.Count);
     }
 
+    [TestMethod]
+    public void SkipsInstalledDependencyMatchedBySlugWithoutNetworkIdentity()
+    {
+        var resolver = new ModDependencyResolver();
+        var projects = CreateProjectStore(
+            CreateProject(
+                "B",
+                [CreateFile("b-file")],
+                slug: "forge-config-api-port"));
+
+        var result = resolver.Resolve(CreateRequest(
+            projects,
+            [
+                CreateLocalInstalledMod(
+                    modId: "forgeconfigapiport",
+                    slugCandidates: ["forgeconfigapiport"]),
+            ],
+            CreateDependency("B")));
+
+        Assert.AreEqual(0, result.ToInstall.Count);
+        Assert.AreEqual(1, result.Satisfied.Count);
+        Assert.AreEqual("B", result.Satisfied[0].ProjectId);
+        StringAssert.Contains(result.Satisfied[0].Reason, "local mod identity");
+    }
+
+    [TestMethod]
+    public void MatchesSlugAgainstModIdIgnoringSeparators()
+    {
+        var resolver = new ModDependencyResolver();
+        var projects = CreateProjectStore(
+            CreateProject(
+                "B",
+                [CreateFile("b-file")],
+                slug: "forge-config-api-port"));
+
+        var result = resolver.Resolve(CreateRequest(
+            projects,
+            [CreateLocalInstalledMod(modId: "forge_config_api_port")],
+            CreateDependency("B")));
+
+        Assert.AreEqual(0, result.ToInstall.Count);
+        Assert.AreEqual(1, result.Satisfied.Count);
+    }
+
+    [TestMethod]
+    public void DownloadsDependencyWhenLocalModIsDifferentMod()
+    {
+        var resolver = new ModDependencyResolver();
+        var projects = CreateProjectStore(
+            CreateProject(
+                "B",
+                [CreateFile("b-file")],
+                slug: "forge-config-api-port"));
+
+        var result = resolver.Resolve(CreateRequest(
+            projects,
+            [CreateLocalInstalledMod(modId: "clothconfig")],
+            CreateDependency("B")));
+
+        Assert.AreEqual(1, result.ToInstall.Count);
+        Assert.AreEqual("B", result.ToInstall[0].ProjectId);
+        Assert.AreEqual(0, result.Satisfied.Count);
+    }
+
+    [TestMethod]
+    public void DownloadsDependencyWhenInstalledVersionTargetsOtherGameVersion()
+    {
+        var resolver = new ModDependencyResolver();
+        var projects = CreateProjectStore(
+            CreateProject(
+                "B",
+                [CreateFile("b-file")],
+                slug: "forge-config-api-port"));
+
+        var result = resolver.Resolve(CreateRequest(
+            projects,
+            [
+                CreateLocalInstalledMod(
+                    modId: "forgeconfigapiport",
+                    gameVersions: ["1.19.2"]),
+            ],
+            CreateDependency("B")));
+
+        Assert.AreEqual(1, result.ToInstall.Count);
+        Assert.AreEqual(0, result.Satisfied.Count);
+    }
+
+    [TestMethod]
+    public void NormalizesIdentityForAliasComparison()
+    {
+        Assert.AreEqual("forgeconfigapiport", ModDependencyResolver.NormalizeIdentity("Forge-Config_API.Port"));
+        Assert.AreEqual("", ModDependencyResolver.NormalizeIdentity("---"));
+        Assert.AreEqual("", ModDependencyResolver.NormalizeIdentity(null));
+    }
+
+    private static InstalledModIdentity CreateLocalInstalledMod(
+        string? modId = null,
+        List<string>? slugCandidates = null,
+        List<string>? gameVersions = null,
+        List<string>? loaders = null)
+    {
+        return new InstalledModIdentity
+        {
+            SourceProjectId = null,
+            Source = null,
+            ModId = modId,
+            SlugCandidates = slugCandidates ?? [],
+            GameVersions = gameVersions ?? [],
+            Loaders = loaders ?? [],
+        };
+    }
+
     private static ModDependencyRequest CreateRequest(
         Dictionary<string, ModDependencyProject> projects,
         params ModDependencyReference[] requiredDependencies)
@@ -322,13 +434,18 @@ public class ModDependencyResolverTest
         return CreateProject(projectId, files, "Modrinth");
     }
 
-    private static ModDependencyProject CreateProject(string projectId, ModDependencyFile[] files, string source)
+    private static ModDependencyProject CreateProject(
+        string projectId,
+        ModDependencyFile[] files,
+        string source = "Modrinth",
+        string? slug = null)
     {
         return new ModDependencyProject
         {
             ProjectId = projectId,
             Source = source,
             ProjectName = $"Dependency {projectId}",
+            Slug = slug,
             Files = [.. files],
         };
     }
