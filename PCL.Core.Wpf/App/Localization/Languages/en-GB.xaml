@@ -391,6 +391,7 @@
 
     <sys:String x:Key="Download.Comp.Dependency.Abort.Message">Installation was cancelled.&#xA;&#xA;Reason:&#xA;{0}</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Abort.Title">Installation cancelled</sys:String>
+    <sys:String x:Key="Download.Comp.Dependency.Checking">Checking mod dependencies, please wait…</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.Cancel">Cancel installation</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.ListItem">- {0} ({1}) - {2} v{3}</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.Message">This mod requires the following dependencies:&#xA;&#xA;{0}</sys:String>

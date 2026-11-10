@@ -391,6 +391,7 @@
 
     <sys:String x:Key="Download.Comp.Dependency.Abort.Message">安裝已中止。&#xA;&#xA;原因：&#xA;{0}</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Abort.Title">安裝已中止</sys:String>
+    <sys:String x:Key="Download.Comp.Dependency.Checking">正在檢測模組前置，請稍候…</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.Cancel">取消安裝</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.ListItem">- {0}（{1}）- {2} v{3}</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.Message">此模組需要以下必需前置：&#xA;&#xA;{0}</sys:String>
