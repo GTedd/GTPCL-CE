@@ -38,8 +38,8 @@ public class ExportOption : DependencyObject
     public string Rules { get; set; } = string.Empty;
 
     /// <summary>
-    ///     如果 Rules 为空，则根据 ShowRules 的内容判断是否应该显示这个复选框。
-    ///     如果 ShowRules 也为空，则始终显示。
+    ///     仅用于判断是否应该显示这个复选框的规则（不参与导出匹配）。
+    ///     当 Rules 为空时，用它代替 Rules 做可见性检查；两者都为空则始终显示。
     /// </summary>
     public string ShowRules { get; set; } = string.Empty;
 
@@ -365,7 +365,11 @@ public partial class PageInstanceExport : IRefreshable, IPageView
                 !PageInstanceLeft.McInstance.Modable)
                 return false;
             // 粗略检查是否可能有符合规则的文件/文件夹
-            return PageInstanceExportViewModel.StandardizeLines(targetOption.Rules.Split('|'), true).Any(rule =>
+            // 只填了 ShowRules 的选项（资源包、光影包、存档等）自身没有导出规则，用 ShowRules 代替检查
+            var visibleRules = string.IsNullOrEmpty(targetOption.Rules)
+                ? targetOption.ShowRules
+                : targetOption.Rules;
+            return PageInstanceExportViewModel.StandardizeLines(visibleRules.Split('|'), true).Any(rule =>
             {
                 if (rule.StartsWithF("!"))
                     return false; // 只看正向规则
