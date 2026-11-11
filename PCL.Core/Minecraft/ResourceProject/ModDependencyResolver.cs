@@ -300,6 +300,7 @@ public sealed class ModDependencyResolver
             var projectKeys = new List<string>();
             AddKey(projectKeys, project.Slug);
             AddKey(projectKeys, project.ProjectId);
+            AddTrimmedKeys(projectKeys, project.Slug);
             if (projectKeys.Count == 0)
                 return false;
 
@@ -317,7 +318,12 @@ public sealed class ModDependencyResolver
                 AddKey(installedKeys, installed.SourceProjectId);
                 AddKey(installedKeys, installed.ModId);
                 foreach (var candidate in installed.SlugCandidates)
+                {
                     AddKey(installedKeys, candidate);
+                    AddTrimmedKeys(installedKeys, candidate);
+                }
+
+                AddTrimmedKeys(installedKeys, installed.ModId);
 
                 if (installedKeys.Any(projectKeys.Contains))
                     return true;
@@ -331,6 +337,51 @@ public sealed class ModDependencyResolver
             var normalized = NormalizeIdentity(value);
             if (normalized.Length >= 3 && !keys.Contains(normalized))
                 keys.Add(normalized);
+        }
+
+        /// <summary>
+        ///     补一组「去掉拖尾修饰词」的候选。
+        ///     工程短名和 Mod ID 之间经常只差一个泛用后缀：
+        ///     Architectury 的 slug 是 <c>architectury-api</c>，jar 自述的 Mod ID 却是 <c>architectury</c>；
+        ///     类似的还有 <c>xxx-lib</c> / <c>xxx-mod</c>。
+        ///     只剥离明确的泛用后缀，避免把 <c>architectury</c> 和 <c>architectury-extras</c> 混为一谈。
+        /// </summary>
+        private static void AddTrimmedKeys(List<string> keys, string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return;
+
+            var segments = value.Trim('-', '_', '.', ' ')
+                .Split(['-', '_', '.', ' '], StringSplitOptions.RemoveEmptyEntries);
+            if (segments.Length < 2)
+            {
+                // 无分隔符时按纯文本处理，例如 architecturyapi → architectury。
+                var normalized = NormalizeIdentity(value);
+                AddTrimmedSuffix(keys, normalized);
+                return;
+            }
+
+            var joined = string.Join("", segments);
+            AddTrimmedSuffix(keys, joined);
+        }
+
+        private static readonly string[] GenericSuffixes = ["api", "lib", "library", "mod", "core"];
+
+        private static void AddTrimmedSuffix(List<string> keys, string normalized)
+        {
+            if (normalized.Length < 3)
+                return;
+
+            foreach (var suffix in GenericSuffixes)
+            {
+                if (normalized.Length - suffix.Length < 3
+                    || !normalized.EndsWith(suffix, StringComparison.Ordinal))
+                    continue;
+
+                var trimmed = normalized[..^suffix.Length];
+                if (!keys.Contains(trimmed))
+                    keys.Add(trimmed);
+            }
         }
 
         public void AddInstall(ModDependencyProject project, ModDependencyFile file)

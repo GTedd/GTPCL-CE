@@ -435,7 +435,7 @@
     <sys:String x:Key="Download.Comp.Dependency.Abort.Title">安装已中止</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Checking">正在检测模组前置，请稍候…</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.Cancel">取消安装</sys:String>
-    <sys:String x:Key="Download.Comp.Dependency.Install.ListItem">- {0}（{1}）- {2} v{3}</sys:String>
+    <sys:String x:Key="Download.Comp.Dependency.Install.ListItem">- {0}（{1}）- {2}</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.Message">此模组需要以下必需前置：&#xA;&#xA;{0}</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.Title">安装模组前置确认</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.WithDependencies">安装模组与必需前置</sys:String>
@@ -1155,6 +1155,16 @@
     <sys:String x:Key="Instance.Resource.Install.SuccessMultiple">已安装 {0} 个{1}！</sys:String>
     <sys:String x:Key="Instance.Resource.Install.SuccessSingle">已安装 {0}！</sys:String>
     <sys:String x:Key="Instance.Resource.Install.UnsupportedFormat">不支持的文件格式：{0}，{1}支持的格式：{2}</sys:String>
+
+    <sys:String x:Key="Instance.Resource.Duplicate.Keep">保留原文件并继续安装</sys:String>
+    <sys:String x:Key="Instance.Resource.Duplicate.ListItem">- {0}（已存在：{1}）</sys:String>
+    <sys:String x:Key="Instance.Resource.Duplicate.Message">以下文件与实例中已有的组件重复：&#xA;&#xA;{0}&#xA;&#xA;同名文件会被删除；只是版本不同的旧文件会被改名为 .disabled 保留。跳过则不再安装这些文件。</sys:String>
+    <sys:String x:Key="Instance.Resource.Duplicate.Replace">替换重复项</sys:String>
+    <sys:String x:Key="Instance.Resource.Duplicate.TagDelete">{0}（同名，将删除）</sys:String>
+    <sys:String x:Key="Instance.Resource.Duplicate.TagDisable">{0}（旧版本，将禁用）</sys:String>
+    <sys:String x:Key="Instance.Resource.Duplicate.Skip">跳过重复项</sys:String>
+    <sys:String x:Key="Instance.Resource.Duplicate.Title">检测到重复组件</sys:String>
+
 
     <!-- Instance.Resource.Install.FileDialog -->
 

@@ -379,6 +379,32 @@ public class ModDependencyResolverTest
         Assert.AreEqual("", ModDependencyResolver.NormalizeIdentity(null));
     }
 
+    [TestMethod]
+    public void MatchesWhenProjectSlugDiffersFromModId()
+    {
+        // 真实案例：Architectury 的 Modrinth slug 是 architectury-api，
+        // 而 jar 里 fabric.mod.json 的 id 是 architectury。旧逻辑只拿 slug 比 Mod ID，必然误判为未安装。
+        var resolver = new ModDependencyResolver();
+        var projects = CreateProjectStore(
+            CreateProject(
+                "lhGA9TYQ",
+                [CreateFile("arch-file")],
+                slug: "architectury-api"));
+
+        var result = resolver.Resolve(CreateRequest(
+            projects,
+            [
+                CreateLocalInstalledMod(
+                    modId: "architectury",
+                    slugCandidates: ["architecturyapi"]),
+            ],
+            CreateDependency("lhGA9TYQ")));
+
+        Assert.AreEqual(0, result.ToInstall.Count);
+        Assert.AreEqual(1, result.Satisfied.Count);
+        Assert.AreEqual("lhGA9TYQ", result.Satisfied[0].ProjectId);
+    }
+
     private static InstalledModIdentity CreateLocalInstalledMod(
         string? modId = null,
         List<string>? slugCandidates = null,

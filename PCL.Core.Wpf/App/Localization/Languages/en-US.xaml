@@ -435,7 +435,7 @@
     <sys:String x:Key="Download.Comp.Dependency.Abort.Title">Installation canceled</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Checking">Checking mod dependencies, please wait…</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.Cancel">Cancel installation</sys:String>
-    <sys:String x:Key="Download.Comp.Dependency.Install.ListItem">- {0} ({1}) - {2} v{3}</sys:String>
+    <sys:String x:Key="Download.Comp.Dependency.Install.ListItem">- {0} ({1}) - {2}</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.Message">This mod requires the following dependencies:&#xA;&#xA;{0}</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.Title">Install mod dependencies</sys:String>
     <sys:String x:Key="Download.Comp.Dependency.Install.WithDependencies">Install mod and dependencies</sys:String>
@@ -1155,6 +1155,15 @@
     <sys:String x:Key="Instance.Resource.Install.SuccessMultiple">Successfully installed {0} {1}(s)!</sys:String>
     <sys:String x:Key="Instance.Resource.Install.SuccessSingle">Successfully installed {0}!</sys:String>
     <sys:String x:Key="Instance.Resource.Install.UnsupportedFormat">Unsupported file format: {0}. {1} supported formats: {2}</sys:String>
+
+    <sys:String x:Key="Instance.Resource.Duplicate.Keep">Keep existing and continue</sys:String>
+    <sys:String x:Key="Instance.Resource.Duplicate.ListItem">- {0} (existing: {1})</sys:String>
+    <sys:String x:Key="Instance.Resource.Duplicate.Message">These files duplicate components already in the instance:&#xA;&#xA;{0}&#xA;&#xA;A file with the same name is deleted; an older version under a different name is renamed to .disabled and kept. Skipping leaves these files uninstalled.</sys:String>
+    <sys:String x:Key="Instance.Resource.Duplicate.Replace">Resolve duplicates</sys:String>
+    <sys:String x:Key="Instance.Resource.Duplicate.TagDelete">{0} (same name, will be deleted)</sys:String>
+    <sys:String x:Key="Instance.Resource.Duplicate.TagDisable">{0} (older version, will be disabled)</sys:String>
+    <sys:String x:Key="Instance.Resource.Duplicate.Skip">Skip duplicates</sys:String>
+    <sys:String x:Key="Instance.Resource.Duplicate.Title">Duplicate components detected</sys:String>
 
     <!-- Instance.Resource.Install.FileDialog -->
 

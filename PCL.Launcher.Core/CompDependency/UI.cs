@@ -44,8 +44,7 @@ public static partial class CompDependency
                     "Download.Comp.Dependency.Install.ListItem",
                     install.ProjectName,
                     install.Source,
-                    install.File.DisplayName,
-                    install.File.Version)));
+                    FormatFileLabel(install.File))));
             var message = Lang.Text("Download.Comp.Dependency.Install.Message", dependencies);
             var dialogResult = CompUi.Current?.ShowDialog(
                     message,
@@ -65,6 +64,32 @@ public static partial class CompDependency
         }
 
         return Comp.CompDepsInstallTypes.WithDeps;
+    }
+
+    /// <summary>
+    ///     组合前置文件的展示文本。
+    ///     Modrinth 的版本名（<c>name</c>）常常自带版本号（如 <c>[Fabric 26.3] v22.0.5</c>），
+    ///     而 <c>version_number</c> 是 <c>22.0.5+fabric</c>，直接拼接会得到
+    ///     <c>v22.0.5 v22.0.5+fabric</c> 这种重复。这里只在版本号确实缺失时补一段。
+    /// </summary>
+    private static string FormatFileLabel(ModDependencyFile file)
+    {
+        var displayName = (file.DisplayName ?? string.Empty).Trim();
+        var version = (file.Version ?? string.Empty).Trim();
+
+        if (version.Length == 0)
+            return displayName;
+        if (displayName.Length == 0)
+            return $"v{version}";
+
+        // 去掉加载器后缀后再比对：版本名里通常只写 22.0.5，不带 +fabric。
+        var plus = version.IndexOf('+');
+        var versionCore = plus > 0 ? version[..plus] : version;
+        if (versionCore.Length == 0
+            || displayName.Contains(versionCore, StringComparison.OrdinalIgnoreCase))
+            return displayName;
+
+        return $"{displayName} v{version}";
     }
 
     private static string GetSource(bool fromCurseForge)
