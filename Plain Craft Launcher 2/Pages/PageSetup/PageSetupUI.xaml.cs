@@ -857,7 +857,7 @@ public partial class PageSetupUI : IPageView
                 if (!conf.SetupLog)
                     setupCount += 1;
                 Launcher.frmSetupLeft.PanItem.Visibility =
-                    setupCount < 2 && !HiddenForceShow ? Visibility.Collapsed : Visibility.Visible;
+                    setupCount == 0 && !HiddenForceShow ? Visibility.Collapsed : Visibility.Visible;
             }
 
             // 工具子页面 (FrmToolsLeft)
@@ -885,7 +885,7 @@ public partial class PageSetupUI : IPageView
                 if (!conf.ToolsTest)
                     toolsCount += 1;
                 Launcher.frmToolsLeft.PanItem.Visibility =
-                    toolsCount < 2 && !HiddenForceShow ? Visibility.Collapsed : Visibility.Visible;
+                    toolsCount == 0 && !HiddenForceShow ? Visibility.Collapsed : Visibility.Visible;
             }
 
             // 其他入口刷新
