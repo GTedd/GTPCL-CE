@@ -86,7 +86,7 @@
                                       Data="F1 M2,0 L0,2 8,10 0,18 2,20 10,12 18,20 20,18 12,10 20,2 18,0 10,8 2,0Z" />
                             </Grid>
                         </local:MyCard>
-                        <local:MyCard Title="{loc:Loc Common.Installation.Cleanroom}" Height="40" Margin="0,12,0,0" x:Name="CardCleanroom" Visibility="{Binding ShowCleanroomCard, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        <local:MyCard Title="{loc:Loc Common.Installation.Cleanroom}" Height="40" Margin="0,12,0,0" x:Name="CardCleanroom" Visibility="Collapsed"
                                       IsSwapped="True" CanSwap="True" SwapLogoRight="True" PreviewSwap="CardCleanroom_PreviewSwap" Swap="Card_Swap">
                             <StackPanel Margin="20,40,18,15" VerticalAlignment="Top" Name="PanCleanroom" />
                             <Grid x:Name="PanCleanroomInfo" Height="18" Margin="132,11,15,0" VerticalAlignment="Top"
@@ -167,7 +167,7 @@
                                       Data="F1 M2,0 L0,2 8,10 0,18 2,20 10,12 18,20 20,18 12,10 20,2 18,0 10,8 2,0Z" />
                             </Grid>
                         </local:MyCard>
-                        <local:MyCard Title="{loc:Loc Common.Installation.LegacyFabric}" Height="40" Margin="0,12,0,0" x:Name="CardLegacyFabric" Visibility="{Binding ShowLegacyFabricCard, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        <local:MyCard Title="{loc:Loc Common.Installation.LegacyFabric}" Height="40" Margin="0,12,0,0" x:Name="CardLegacyFabric" Visibility="Collapsed"
                                       IsSwapped="True" CanSwap="True" SwapLogoRight="True" PreviewSwap="CardLegacyFabric_PreviewSwap">
                             <StackPanel Margin="20,40,18,0" VerticalAlignment="Top" Name="PanLegacyFabric" />
                             <Grid x:Name="PanLegacyFabricInfo" Height="18" Margin="132,11,15,0" VerticalAlignment="Top"
@@ -237,7 +237,7 @@
                             </Grid>
                         </local:MyCard>
                         <local:MyCard Title="{loc:Loc Common.Installation.LegacyFabricApi}" Height="40" Margin="0,12,0,0"
-                                      x:Name="CardLegacyFabricApi" Visibility="{Binding ShowLegacyFabricApiCard, Converter={StaticResource BooleanToVisibilityConverter}}" IsSwapped="True" CanSwap="True" SwapLogoRight="True" PreviewSwap="CardLegacyFabricApi_PreviewSwap">
+                                      x:Name="CardLegacyFabricApi" Visibility="Collapsed" IsSwapped="True" CanSwap="True" SwapLogoRight="True" PreviewSwap="CardLegacyFabricApi_PreviewSwap">
                             <StackPanel Margin="20,40,18,15" VerticalAlignment="Top" Name="PanLegacyFabricApi" />
                             <Grid x:Name="PanLegacyFabricApiInfo" Height="18" Margin="132,11,15,0"
                                   VerticalAlignment="Top" Tag="True">
@@ -263,7 +263,7 @@
                                       Data="F1 M2,0 L0,2 8,10 0,18 2,20 10,12 18,20 20,18 12,10 20,2 18,0 10,8 2,0Z" />
                             </Grid>
                         </local:MyCard>
-                        <local:MyCard Title="{loc:Loc Common.Installation.LabyMod}" Height="40" Margin="0,12,0,0" x:Name="CardLabyMod" Visibility="{Binding ShowLabyModCard, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        <local:MyCard Title="{loc:Loc Common.Installation.LabyMod}" Height="40" Margin="0,12,0,0" x:Name="CardLabyMod" Visibility="Collapsed"
                                       IsSwapped="True" CanSwap="True" SwapLogoRight="True" PreviewSwap="CardLabyMod_PreviewSwap" Swap="Card_Swap">
                             <StackPanel Margin="20,40,18,0" VerticalAlignment="Top" Name="PanLabyMod" />
                             <Grid x:Name="PanLabyModInfo" Height="18" Margin="132,11,15,0" VerticalAlignment="Top"
@@ -317,7 +317,7 @@
                                       Data="F1 M2,0 L0,2 8,10 0,18 2,20 10,12 18,20 20,18 12,10 20,2 18,0 10,8 2,0Z" />
                             </Grid>
                         </local:MyCard>
-                        <local:MyCard Title="{loc:Loc Common.Installation.OptiFine}" Height="40" Margin="0,12,0,0" x:Name="CardOptiFine" Visibility="{Binding ShowOptiFineCard, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        <local:MyCard Title="{loc:Loc Common.Installation.OptiFine}" Height="40" Margin="0,12,0,0" x:Name="CardOptiFine" Visibility="Collapsed"
                                       IsSwapped="True" CanSwap="True" SwapLogoRight="True" PreviewSwap="CardOptiFine_PreviewSwap" Swap="Card_Swap">
                             <StackPanel Margin="20,40,18,15" VerticalAlignment="Top">
                                 <StackPanel Name="PanOptiFine" />
@@ -346,7 +346,7 @@
                                       Data="F1 M2,0 L0,2 8,10 0,18 2,20 10,12 18,20 20,18 12,10 20,2 18,0 10,8 2,0Z" />
                             </Grid>
                         </local:MyCard>
-                        <local:MyCard Title="{loc:Loc Common.Installation.OptiFabric}" Height="40" Margin="0,12,0,0" x:Name="CardOptiFabric" Visibility="{Binding ShowOptiFabricCard, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        <local:MyCard Title="{loc:Loc Common.Installation.OptiFabric}" Height="40" Margin="0,12,0,0" x:Name="CardOptiFabric" Visibility="Collapsed"
                                       IsSwapped="True" CanSwap="True" SwapLogoRight="True" PreviewSwap="CardOptiFabric_PreviewSwap" Swap="Card_Swap">
                             <StackPanel Margin="20,40,18,15" VerticalAlignment="Top" Name="PanOptiFabric" />
                             <Grid x:Name="PanOptiFabricInfo" Height="18" Margin="132,11,15,0" VerticalAlignment="Top"
@@ -373,7 +373,7 @@
                                       Data="F1 M2,0 L0,2 8,10 0,18 2,20 10,12 18,20 20,18 12,10 20,2 18,0 10,8 2,0Z" />
                             </Grid>
                         </local:MyCard>
-                        <local:MyCard Title="{loc:Loc Common.Installation.LiteLoader}" Height="40" Margin="0,12,0,0" x:Name="CardLiteLoader" Visibility="{Binding ShowLiteLoaderCard, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        <local:MyCard Title="{loc:Loc Common.Installation.LiteLoader}" Height="40" Margin="0,12,0,0" x:Name="CardLiteLoader" Visibility="Collapsed"
                                       IsSwapped="True" CanSwap="True" SwapLogoRight="True" PreviewSwap="CardLiteLoader_PreviewSwap" Swap="Card_Swap">
                             <StackPanel Margin="20,40,18,15" VerticalAlignment="Top" Name="PanLiteLoader" />
                             <Grid x:Name="PanLiteLoaderInfo" Height="18" Margin="132,11,15,0" VerticalAlignment="Top"

@@ -157,7 +157,7 @@
                     </x:Array>
                 </local:MyListItem.Buttons>
             </local:MyListItem>
-            <local:MyListItem x:Name="ItemOptiFine" Type="RadioBox" IsScaleAnimationEnabled="False" Tag="10"
+            <local:MyListItem x:Name="ItemOptiFine" Visibility="Collapsed" Type="RadioBox" IsScaleAnimationEnabled="False" Tag="10"
                               Check="PageCheck"
                               MinPaddingRight="35" Height="36" VerticalAlignment="Top"
                               Title="{loc:Loc Download.Left.Optifine}"
@@ -205,7 +205,7 @@
                     </x:Array>
                 </local:MyListItem.Buttons>
             </local:MyListItem>
-            <local:MyListItem x:Name="ItemCleanroom" Type="RadioBox" IsScaleAnimationEnabled="False" Tag="13"
+            <local:MyListItem x:Name="ItemCleanroom" Visibility="Collapsed" Type="RadioBox" IsScaleAnimationEnabled="False" Tag="13"
                               Check="PageCheck"
                               MinPaddingRight="35" Height="36" VerticalAlignment="Top"
                               Title="{loc:Loc Download.Left.Cleanroom}"
@@ -237,7 +237,7 @@
                     </x:Array>
                 </local:MyListItem.Buttons>
             </local:MyListItem>
-            <local:MyListItem x:Name="ItemLegacyFabric" Type="RadioBox" IsScaleAnimationEnabled="False" Tag="18"
+            <local:MyListItem x:Name="ItemLegacyFabric" Visibility="Collapsed" Type="RadioBox" IsScaleAnimationEnabled="False" Tag="18"
                               Check="PageCheck"
                               MinPaddingRight="35" Height="36" VerticalAlignment="Top"
                               Title="{loc:Loc Download.Left.LegacyFabric}"
@@ -253,7 +253,7 @@
                     </x:Array>
                 </local:MyListItem.Buttons>
             </local:MyListItem>
-            <local:MyListItem x:Name="ItemLabyMod" Type="RadioBox" IsScaleAnimationEnabled="False" Tag="17"
+            <local:MyListItem x:Name="ItemLabyMod" Visibility="Collapsed" Type="RadioBox" IsScaleAnimationEnabled="False" Tag="17"
                               Check="PageCheck"
                               MinPaddingRight="35" Height="36" VerticalAlignment="Top"
                               Title="{loc:Loc Download.Left.LabyMod}"
@@ -269,7 +269,7 @@
                     </x:Array>
                 </local:MyListItem.Buttons>
             </local:MyListItem>
-            <local:MyListItem x:Name="ItemLiteLoader" Type="RadioBox" IsScaleAnimationEnabled="False" Tag="16"
+            <local:MyListItem x:Name="ItemLiteLoader" Visibility="Collapsed" Type="RadioBox" IsScaleAnimationEnabled="False" Tag="16"
                               Check="PageCheck"
                               MinPaddingRight="35" Height="36" VerticalAlignment="Top"
                               Title="{loc:Loc Download.Left.LiteLoader}"
