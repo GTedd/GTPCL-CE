@@ -290,6 +290,33 @@
                                       Data="F1 M2,0 L0,2 8,10 0,18 2,20 10,12 18,20 20,18 12,10 20,2 18,0 10,8 2,0Z" />
                             </Grid>
                         </local:MyCard>
+                        <local:MyCard Title="Horizon" Height="40" Margin="0,12,0,0" x:Name="CardHorizon" Visibility="{Binding ShowHorizonCard, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                      IsSwapped="True" CanSwap="True" SwapLogoRight="True" PreviewSwap="CardHorizon_PreviewSwap" Swap="Card_Swap">
+                            <StackPanel Margin="20,40,18,0" VerticalAlignment="Top" Name="PanHorizon" />
+                            <Grid x:Name="PanHorizonInfo" Height="18" Margin="132,11,15,0" VerticalAlignment="Top"
+                                  Tag="True">
+                                <Grid.RenderTransform>
+                                    <TranslateTransform />
+                                </Grid.RenderTransform>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="1*" />
+                                </Grid.ColumnDefinitions>
+                                <Image x:Name="ImgHorizon" Visibility="{Binding ShowHorizonImage, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,7,0" SnapsToDevicePixels="True" Height="18"
+                                       RenderOptions.BitmapScalingMode="Linear"
+                                       Source="pack://application:,,,/images/Blocks/CommandBlock.png" />
+                                <TextBlock x:Name="LabHorizon" Text="{Binding HorizonText}" Foreground="{Binding HorizonForeground}" VerticalAlignment="Center"
+                                           TextTrimming="CharacterEllipsis" Grid.Column="1" />
+                            </Grid>
+                            <Grid x:Name="BtnHorizonClear" Visibility="{Binding ShowHorizonClear, Converter={StaticResource BooleanToVisibilityConverter}}" Height="30" Width="30" HorizontalAlignment="Right"
+                                  VerticalAlignment="Top" Margin="0,5,32,0" MouseLeftButtonUp="Horizon_Clear"
+                                  Background="{StaticResource ColorBrushSemiTransparent}">
+                                <Path x:Name="BtnHorizonClearInner" Height="10" Width="10" Stretch="Uniform"
+                                      Fill="{StaticResource ColorBrushGray1}" HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Data="F1 M2,0 L0,2 8,10 0,18 2,20 10,12 18,20 20,18 12,10 20,2 18,0 10,8 2,0Z" />
+                            </Grid>
+                        </local:MyCard>
                         <local:MyCard Title="{loc:Loc Common.Installation.OptiFine}" Height="40" Margin="0,12,0,0" x:Name="CardOptiFine" Visibility="{Binding ShowOptiFineCard, Converter={StaticResource BooleanToVisibilityConverter}}"
                                       IsSwapped="True" CanSwap="True" SwapLogoRight="True" PreviewSwap="CardOptiFine_PreviewSwap" Swap="Card_Swap">
                             <StackPanel Margin="20,40,18,15" VerticalAlignment="Top">
@@ -395,6 +422,7 @@
             <local:MyLoading Visibility="Collapsed" x:Name="LoadFabricApi" HasAnimation="False" StateChanged="Load_State" />
             <local:MyLoading Visibility="Collapsed" x:Name="LoadLegacyFabricApi" HasAnimation="False" StateChanged="LoadLegacyFabricApi_StateChanged" />
             <local:MyLoading Visibility="Collapsed" x:Name="LoadLabyMod" HasAnimation="False" StateChanged="Load_State" />
+            <local:MyLoading Visibility="Collapsed" x:Name="LoadHorizon" HasAnimation="False" StateChanged="Load_State" />
             <local:MyLoading Visibility="Collapsed" x:Name="LoadOptiFabric" HasAnimation="False" StateChanged="Load_State" />
         </local:MyCard>
     </Grid>

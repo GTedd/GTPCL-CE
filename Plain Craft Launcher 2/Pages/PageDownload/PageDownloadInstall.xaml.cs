@@ -42,6 +42,7 @@ public partial class PageDownloadInstall : IPageView
         LoadFabricApi.StateChanged += (_, _, _) => FabricApi_Loaded();
         LoadOptiFabric.StateChanged += (_, _, _) => OptiFabric_Loaded();
         LoadLabyMod.StateChanged += (_, _, _) => LabyMod_Loaded();
+        LoadHorizon.StateChanged += (_, _, _) => Horizon_Loaded();
     }
 
     private void Card_Swap(object sender, Common.RouteEventArgs e) => ReloadSelected();
@@ -82,6 +83,7 @@ public partial class PageDownloadInstall : IPageView
         GameDownload.DlNeoForgeListLoader.Start();
         GameDownload.DlCleanroomListLoader.Start();
         GameDownload.DlLabyModListLoader.Start();
+        HorizonInstance.DlHorizonListLoader.Start();
         GameDownload.DlLegacyFabricListLoader.Start();
 
         // 重载预览
@@ -109,6 +111,7 @@ public partial class PageDownloadInstall : IPageView
         LoadCleanroom.State = GameDownload.DlCleanroomListLoader;
         LoadOptiFabric.State = CompDownloadLoaders.DlOptiFabricLoader;
         LoadLabyMod.State = GameDownload.DlLabyModListLoader;
+        LoadHorizon.State = HorizonInstance.DlHorizonListLoader;
         LoadLegacyFabric.State = GameDownload.DlLegacyFabricListLoader;
         LoadLegacyFabricApi.State = CompDownloadLoaders.DlLegacyFabricApiLoader;
     }
@@ -181,6 +184,7 @@ public partial class PageDownloadInstall : IPageView
         CardFabricApi.IsSwapped = true;
         CardOptiFabric.IsSwapped = true;
         CardLabyMod.IsSwapped = true;
+        CardHorizon.IsSwapped = true;
 
         if (!States.Hint.InstallPageBack)
         {
@@ -211,6 +215,7 @@ public partial class PageDownloadInstall : IPageView
         CompDownloadLoaders.DlLegacyFabricApiLoader.Start();
         CompDownloadLoaders.DlOptiFabricLoader.Start();
         GameDownload.DlLabyModListLoader.Start();
+        HorizonInstance.DlHorizonListLoader.Start();
 
         Animations.AniStart(new[]
         {
@@ -231,6 +236,7 @@ public partial class PageDownloadInstall : IPageView
                 LegacyFabricApi_Loaded();
                 OptiFabric_Loaded();
                 LabyMod_Loaded();
+                Horizon_Loaded();
                 ReloadSelected();
                 PanMinecraft.Visibility = Visibility.Collapsed;
             }, after: true),
@@ -265,6 +271,8 @@ public partial class PageDownloadInstall : IPageView
                         { Source = CardLegacyFabricApi.MainTextBlock, Mode = BindingMode.OneWay });
                 BtnLabyModClearInner.SetBinding(Shape.FillProperty,
                     new Binding("Foreground") { Source = CardLabyMod.MainTextBlock, Mode = BindingMode.OneWay });
+                BtnHorizonClearInner.SetBinding(Shape.FillProperty,
+                    new Binding("Foreground") { Source = CardHorizon.MainTextBlock, Mode = BindingMode.OneWay });
                 BtnOptiFabricClearInner.SetBinding(Shape.FillProperty,
                     new Binding("Foreground") { Source = CardOptiFabric.MainTextBlock, Mode = BindingMode.OneWay });
             }, after: true)
@@ -358,6 +366,9 @@ public partial class PageDownloadInstall : IPageView
 
     // Legacy FabricApi
     private Comp.CompFile? _selectedLegacyFabricApi;
+
+    // Horizon
+    private PCL.Core.Minecraft.Horizon.HorizonRemoteBuild? _selectedHorizon;
 
     // LabyMod
     private string? _selectedLabyModChannel;
@@ -681,6 +692,36 @@ public partial class PageDownloadInstall : IPageView
                 }
             }
 
+            // Horizon
+            var horizonCandidate = HorizonInstance.DlHorizonListLoader.output;
+            if (horizonCandidate is null || horizonCandidate.Minecraft != _vanillaName)
+            {
+                _vm.ShowHorizonCard = false;
+            }
+            else
+            {
+                _vm.ShowHorizonCard = true;
+                var horizonError = LoadHorizonGetError();
+                CardHorizon.MainSwap.Visibility = horizonError is null ? Visibility.Visible : Visibility.Collapsed;
+                if (horizonError is not null)
+                    CardHorizon.IsSwapped = true;
+                SetPanelVisibility(PanHorizonInfo, CardHorizon.IsSwapped);
+                if (_selectedHorizon is null)
+                {
+                    _vm.ShowHorizonClear = false;
+                    _vm.ShowHorizonImage = false;
+                    _vm.HorizonText = horizonError ?? Lang.Text("Download.Install.State.CanAdd");
+                    _vm.HorizonForeground = ThemeManager.colorGray4;
+                }
+                else
+                {
+                    _vm.ShowHorizonClear = true;
+                    _vm.ShowHorizonImage = true;
+                    _vm.HorizonText = _selectedHorizon.Title;
+                    _vm.HorizonForeground = ThemeManager.colorGray1;
+                }
+            }
+
             // OptiFabric
             if (_selectedFabric is null || _selectedOptiFine is null)
             {
@@ -785,6 +826,7 @@ public partial class PageDownloadInstall : IPageView
         _selectedLabyModVersion = null;
         _selectedLabyModBaseVersion = null;
         _selectedLabyModChannel = null;
+        _selectedHorizon = null;
         _selectedLegacyFabric = null;
         _selectedLegacyFabricApi = null;
     }
@@ -827,6 +869,9 @@ public partial class PageDownloadInstall : IPageView
             _selectedLabyModBaseVersion = null;
             _selectedLabyModVersion = null;
         }
+
+        if (loaderType != ModLoaderType.Horizon)
+            _selectedHorizon = null;
 
         _selectedLoaderType = loaderType;
         _selectedApiName = null;
@@ -875,6 +920,8 @@ public partial class PageDownloadInstall : IPageView
 
         if (_selectedLabyModVersion is not null) return "pack://application:,,,/images/Blocks/LabyMod.png";
 
+        if (_selectedHorizon is not null) return "pack://application:,,,/images/Blocks/CommandBlock.png";
+
         return _vanillaIcon;
     }
 
@@ -888,6 +935,7 @@ public partial class PageDownloadInstall : IPageView
         if (_selectedLegacyFabric is not null) name += "-LegacyFabric_" + _selectedLegacyFabric;
         if (_selectedLabyModVersion is not null)
             name += "-LabyMod_" + _selectedLabyModBaseVersion + (_selectedLabyModChannel == "snapshot" ? "_Snapshot" : "_Production");
+        if (_selectedHorizon is not null) name += "-Horizon";
         if (_selectedForge is not null) name += "-Forge_" + _selectedForge.VersionName;
         if (_selectedNeoForge is not null) name += "-NeoForge_" + _selectedNeoForge.VersionName;
         if (_selectedCleanroom is not null) name += "-Cleanroom_" + _selectedCleanroom.VersionName;
@@ -1130,7 +1178,7 @@ public partial class PageDownloadInstall : IPageView
     /// </summary>
     private string LoadOptiFineGetError()
     {
-        if (_selectedLoaderType is ModLoaderType.NeoForge or ModLoaderType.LabyMod or ModLoaderType.Cleanroom)
+        if (_selectedLoaderType is ModLoaderType.NeoForge or ModLoaderType.LabyMod or ModLoaderType.Cleanroom or ModLoaderType.Horizon)
             return Lang.Text("Download.Install.Compat.IncompatibleWithLoader", _selectedLoaderType);
         if (LoadOptiFine is null || LoadOptiFine.State.LoadingState == LoadingState.Run)
             return Lang.Text("Download.Install.State.Loading");
@@ -1279,7 +1327,7 @@ public partial class PageDownloadInstall : IPageView
         // 检查 Loader
         if (GetLoaderError(LoadLiteLoader) is not null)
             return GetLoaderError(LoadLiteLoader);
-        if (_selectedLoaderType is ModLoaderType.NeoForge or ModLoaderType.LegacyFabric or ModLoaderType.LabyMod or ModLoaderType.Cleanroom)
+        if (_selectedLoaderType is ModLoaderType.NeoForge or ModLoaderType.LegacyFabric or ModLoaderType.LabyMod or ModLoaderType.Cleanroom or ModLoaderType.Horizon)
             return Lang.Text("Download.Install.Compat.IncompatibleWithLoader", _selectedLoaderType);
         // 检查版本
         return GameDownload.DlLiteLoaderListLoader.output.Value.Any(v => (v.Inherit ?? "") == (_vanillaName ?? ""))
@@ -2317,6 +2365,94 @@ public partial class PageDownloadInstall : IPageView
         ReloadSelected();
     }
 
+    #region Horizon
+
+    private string? LoadHorizonGetError()
+    {
+        if (LoadHorizon is null || LoadHorizon.State.LoadingState == LoadingState.Run)
+            return Lang.Text("Download.Install.State.Loading");
+        if (LoadHorizon.State.LoadingState == LoadingState.Error)
+            return $"{Lang.Text("Download.Install.State.GetVersionListFailed")}{((Loading.LoaderBase)LoadHorizon.State).Error.Message}";
+        if (GetLoaderError(LoadHorizon) is not null)
+            return GetLoaderError(LoadHorizon);
+        if (_selectedOptiFine is not null)
+            return Lang.Text("Download.Install.Compat.IncompatibleWithOptiFine");
+        if (_selectedLoaderType is not null && _selectedLoaderType != ModLoaderType.Horizon)
+            return Lang.Text("Download.Install.Compat.IncompatibleWithLoader", _selectedLoaderType);
+        if (_selectedLiteLoader is not null)
+            return Lang.Text("Download.Install.Compat.IncompatibleWithLiteLoader");
+        var candidate = HorizonInstance.DlHorizonListLoader.output;
+        return candidate is not null && candidate.Minecraft == _vanillaName
+            ? null
+            : Lang.Text("Download.Install.State.NoVersion");
+    }
+
+    private void CardHorizon_PreviewSwap(object sender, Common.RouteEventArgs e)
+    {
+        if (LoadHorizonGetError() is not null)
+            e.handled = true;
+    }
+
+    /// <summary>
+    ///     可视化 Horizon 可选构建（最新 Nightly）。
+    /// </summary>
+    private void Horizon_Loaded()
+    {
+        try
+        {
+            if (LoadHorizon.State.LoadingState == LoadingState.Run)
+                return;
+            var candidate = HorizonInstance.DlHorizonListLoader.output;
+            PanHorizon.Children.Clear();
+            if (candidate is null)
+                return;
+            PanHorizon.Tag = candidate;
+            CardHorizon.SwapControl = PanHorizon;
+            CardHorizon.InstallMethod = stack =>
+            {
+                var build = ((HorizonCandidate)stack.Tag).Build;
+                var item = new MyListItem
+                {
+                    SnapsToDevicePixels = true,
+                    Height = 42d,
+                    Type = MyListItem.CheckType.Clickable,
+                    Tag = build,
+                    Logo = $"{Common.PathImage}Blocks/CommandBlock.png",
+                    Title = build.Title,
+                    Info = "Rust 重写的 Java 版，由 horizon-client 代替 Java 运行（非官方，horizon-rust/horizon）"
+                };
+                item.Click += (sender, _) => Horizon_Selected((MyListItem)sender);
+                stack.Children.Add(item);
+            };
+        }
+        catch (Exception ex)
+        {
+            Common.Log(ex, "可视化 Horizon 安装版本列表出错", Common.LogLevel.Feedback,
+                userSummary: Lang.Text("Download.Install.Error.OperationFailed"));
+        }
+    }
+
+    private void Horizon_Selected(MyListItem sender)
+    {
+        SelectModLoader(ModLoaderType.Horizon);
+        _selectedHorizon = (PCL.Core.Minecraft.Horizon.HorizonRemoteBuild)sender.Tag;
+        CardHorizon.IsSwapped = true;
+        ReloadSelected();
+    }
+
+    private void Horizon_Clear(object sender, MouseButtonEventArgs e)
+    {
+        _selectedHorizon = null;
+        if (_selectedLoaderType == ModLoaderType.Horizon)
+            _selectedLoaderType = null;
+        _selectedApiName = null;
+        CardHorizon.IsSwapped = true;
+        e.Handled = true;
+        ReloadSelected();
+    }
+
+    #endregion
+
     private void LabyMod_Clear(object sender, MouseButtonEventArgs e)
     {
         _selectedLabyModCommitRef = null;
@@ -2379,7 +2515,8 @@ public partial class PageDownloadInstall : IPageView
             labyModChannel = _selectedLabyModChannel,
             labyModCommitRef = _selectedLabyModCommitRef,
             legacyFabricVersion = _selectedLegacyFabric,
-            legacyFabricApi = _selectedLegacyFabricApi
+            legacyFabricApi = _selectedLegacyFabricApi,
+            horizonBuild = _selectedHorizon
         };
         if (!DownloadUi.McInstall(request))
             return;

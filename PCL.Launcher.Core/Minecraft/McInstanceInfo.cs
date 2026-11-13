@@ -52,6 +52,18 @@ public class McInstanceInfo
     /// </summary>
     public bool HasLabyMod;
 
+    // Horizon
+
+    /// <summary>
+    ///     该实例是否为 Horizon（Rust 重写的 Java 版，由 horizon-client 代替 Java 进程启动）。
+    /// </summary>
+    public bool HasHorizon;
+
+    /// <summary>
+    ///     Horizon 构建版本，如 nightly-2026-11-13-9f42064。
+    /// </summary>
+    public string? Horizon;
+
     // LegacyFabric
 
     /// <summary>
@@ -275,6 +287,8 @@ public class McInstanceInfo
             toStringRet += ", Quilt" + FormatVersion(Quilt);
         if (HasLabyMod)
             toStringRet += ", LabyMod" + FormatVersion(LabyMod);
+        if (HasHorizon)
+            toStringRet += ", Horizon" + FormatVersion(Horizon);
         if (HasOptiFine)
             toStringRet += ", OptiFine" + FormatVersion(OptiFine);
         if (HasLiteLoader)

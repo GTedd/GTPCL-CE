@@ -108,6 +108,7 @@ public static partial class InstanceList
                             instanceInfo.HasCleanroom =
                                 !string.IsNullOrEmpty(instanceInfo.Cleanroom);
                             instanceInfo.HasOptiFine = !string.IsNullOrEmpty(instanceInfo.OptiFine);
+                            instanceInfo.HasHorizon = instance.state == McInstanceState.Horizon;
                             instance.Info = instanceInfo;
                             hasCachedInfo = true;
                         }

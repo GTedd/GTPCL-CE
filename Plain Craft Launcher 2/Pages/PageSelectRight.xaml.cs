@@ -199,6 +199,7 @@ public partial class PageSelectRight : IPageView
                         var isLiteExists = false;
                         var isCleanroomExists = false;
                         var isLabyModExists = false;
+                        var isHorizonExists = false;
                         foreach (var instance in Card.Value)
                         {
                             if (!instance.IsLoaded)
@@ -217,11 +218,13 @@ public partial class PageSelectRight : IPageView
                                 isCleanroomExists = true;
                             if (instance.Info.HasLabyMod)
                                 isLabyModExists = true;
+                            if (instance.Info.HasHorizon)
+                                isHorizonExists = true;
                         }
 
                         if ((isLiteExists ? 1 : 0) + (isForgeExists ? 1 : 0) + (isFabricExists ? 1 : 0) +
                             (isNeoForgeExists ? 1 : 0) + (isQuiltExists ? 1 : 0) + (isCleanroomExists ? 1 : 0) +
-                            (isLabyModExists ? 1 : 0) > 1)
+                            (isLabyModExists ? 1 : 0) + (isHorizonExists ? 1 : 0) > 1)
                             cardNameKey = "Select.Instance.Card.Modable";
                         else if (isForgeExists)
                             cardNameKey = "Select.Instance.Card.Forge";
@@ -231,6 +234,8 @@ public partial class PageSelectRight : IPageView
                             cardNameKey = "Select.Instance.Card.Cleanroom";
                         else if (isLabyModExists)
                             cardNameKey = "Select.Instance.Card.LabyMod";
+                        else if (isHorizonExists)
+                            cardNameKey = "Select.Instance.Card.Horizon";
                         else if (isLiteExists)
                             cardNameKey = "Select.Instance.Card.LiteLoader";
                         else if (isQuiltExists)

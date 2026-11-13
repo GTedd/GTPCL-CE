@@ -119,6 +119,13 @@ public partial class PageInstanceInstall : IPageView
 
     private void BtnSelectStart_Click(object sender, MouseButtonEventArgs mouseButtonEventArgs)
     {
+        // Horizon 实例由 horizon-client 运行，修改加载器会重写实例 json 并丢失 Horizon 信息
+        if (HorizonInstance.IsHorizon(PageInstanceLeft.McInstance))
+        {
+            HintService.Show(Hints.Info("Horizon 实例不支持修改加载器，如需更新 Horizon 请重新安装一个 Horizon 实例。"));
+            return;
+        }
+
         // Quilt 实例无法通过安装管线重装/修改（已移除 Quilt 安装支持）
         if (PageInstanceLeft.McInstance.Info.HasQuilt)
         {

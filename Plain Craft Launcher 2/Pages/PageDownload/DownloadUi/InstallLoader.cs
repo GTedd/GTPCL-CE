@@ -69,6 +69,17 @@ public static partial class DownloadUi
         loaderList.Add(_CreateMergeInstallLoader(instanceFolder, tempMcFolder, folders, request));
         if (!dontFixLibraries && _ShouldFixInstallLibraries(request))
             _AddLibraryFixLoader(loaderList, request, instanceFolder, minecraftName);
+        if (request.horizonBuild is { } horizonBuild)
+            loaderList.Add(new Loading.LoaderTask<string, string>("安装 Horizon",
+                task =>
+                {
+                    HorizonInstance.Install(task, instanceFolder, request.targetInstanceName, minecraftName, horizonBuild);
+                    task.output = task.input;
+                })
+            {
+                ProgressWeight = 6,
+                block = true
+            });
         loaderList.Add(_CreateDeleteIgnoreFlagLoader(instanceFolder));
         return loaderList;
     }

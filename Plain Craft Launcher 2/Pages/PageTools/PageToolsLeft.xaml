@@ -47,14 +47,6 @@
                           Title="{loc:Loc Tools.Left.Utilities.Title}" Check="PageCheck"
                           LogoScale="0.9"
                           SvgIcon="lucide/tool-case" />
-        <local:MyListItem x:Name="ItemHorizon"
-                          IsScaleAnimationEnabled="False"
-                          Type="RadioBox" Tag="4"
-                          MinPaddingRight="35" Height="36"
-                          VerticalAlignment="Top"
-                          Title="Horizon" Check="PageCheck"
-                          LogoScale="0.9"
-                          SvgIcon="lucide/rocket" />
 
     </StackPanel>
 </local:MyPageLeft>

@@ -428,8 +428,17 @@ public static partial class GameLaunch
     private static Loading.LoaderCombo<object> _CreateLaunchLoader()
     {
         var loaders = new List<Loading.LoaderBase>();
-        loaders.AddRange(_CreateGameFileLoaders());
-        loaders.AddRange(_CreateProcessLoaders());
+        if (HorizonInstance.IsHorizon(InstanceList.McMcInstanceSelected))
+        {
+            // Horizon：保留 Java、登录与补全文件，之后由 horizon-client 代替 Java 进程
+            loaders.AddRange(_CreateGameFileLoaders().Where(loader => loader.Identifier != LaunchStageGetArgumentsId));
+            loaders.AddRange(_CreateHorizonProcessLoaders());
+        }
+        else
+        {
+            loaders.AddRange(_CreateGameFileLoaders());
+            loaders.AddRange(_CreateProcessLoaders());
+        }
 
         return new Loading.LoaderCombo<object>(Lang.Text("Minecraft.Launch.Stage.Root"), loaders)
         {

@@ -140,9 +140,9 @@ public class McInstance
                     return Config.Launch.IndieSolutionV2 switch
                     {
                         0 => false, // 关闭
-                        1 => Info.HasLabyMod || Modable, // 仅隔离可安装 Mod 的实例
+                        1 => Info.HasLabyMod || Info.HasHorizon || Modable, // 仅隔离可安装 Mod 的实例
                         2 => !isRelease, // 仅隔离非正式版
-                        3 => Info.HasLabyMod || Modable || !isRelease, // 隔离非正式版与可安装 Mod 的实例
+                        3 => Info.HasLabyMod || Info.HasHorizon || Modable || !isRelease, // 隔离非正式版与可安装 Mod 的实例
                         _ => true // 隔离所有实例
                     };
                 }
@@ -876,7 +876,13 @@ public class McInstance
                     }
 
                     // Fabric、Forge、Quilt、LabyMod、Legacy Fabric
-                    if (realJson.Contains("labymod_data"))
+                    if (realJson.Contains("horizon_data"))
+                    {
+                        state = McInstanceState.Horizon;
+                        Info.HasHorizon = true;
+                        Info.Horizon = JsonObject["horizon_data"]?["version"]?.ToString();
+                    }
+                    else if (realJson.Contains("labymod_data"))
                     {
                         state = McInstanceState.LabyMod;
                         Info.HasLabyMod = true;
@@ -1030,6 +1036,11 @@ public class McInstance
                         Logo = LauncherPaths.ImageRoot + "Blocks/LabyMod.png";
                         break;
                     }
+                    case McInstanceState.Horizon:
+                    {
+                        Logo = LauncherPaths.ImageRoot + "Blocks/CommandBlock.png";
+                        break;
+                    }
 
                     default:
                     {
@@ -1131,6 +1142,8 @@ public class McInstance
             modLoaderInfo += $", Cleanroom{McInstanceInfo.FormatVersion(Info.Cleanroom)}";
         if (Info.HasLabyMod)
             modLoaderInfo += $", LabyMod{McInstanceInfo.FormatVersion(Info.LabyMod)}";
+        if (Info.HasHorizon)
+            modLoaderInfo += $", Horizon{McInstanceInfo.FormatVersion(Info.Horizon)}";
         if (Info.HasFabric)
             modLoaderInfo += $", Fabric{McInstanceInfo.FormatVersion(Info.Fabric)}";
         if (Info.HasQuilt)
@@ -1154,6 +1167,7 @@ public class McInstance
             case McInstanceState.Fabric:
             case McInstanceState.OptiFine:
             case McInstanceState.LiteLoader:
+            case McInstanceState.Horizon:
             {
                 var vanillaName = Info.VanillaName ?? string.Empty;
                 if (vanillaName.ContainsF("pre", true))

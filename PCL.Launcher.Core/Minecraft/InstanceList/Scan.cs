@@ -138,7 +138,8 @@ public static partial class InstanceList
                 McInstanceState.LegacyFabric,
                 McInstanceState.Quilt,
                 McInstanceState.Cleanroom,
-                McInstanceState.LabyMod
+                McInstanceState.LabyMod,
+                McInstanceState.Horizon
             ],
             McInstanceCardType.API);
 

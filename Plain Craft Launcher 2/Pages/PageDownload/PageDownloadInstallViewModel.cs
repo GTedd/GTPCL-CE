@@ -89,6 +89,16 @@ public partial class PageDownloadInstallViewModel : ViewModelBase
 
     [ObservableProperty] private string? _labyModText = "";
 
+    [ObservableProperty] private bool _showHorizonCard = true;
+
+    [ObservableProperty] private bool _showHorizonClear = true;
+
+    [ObservableProperty] private bool _showHorizonImage = true;
+
+    [ObservableProperty] private string? _horizonText = "";
+
+    [ObservableProperty] private Brush _horizonForeground = ThemeManager.colorGray1;
+
     [ObservableProperty] private bool _showOptiFabricCard = true;
 
     [ObservableProperty] private bool _showOptiFabricClear = true;

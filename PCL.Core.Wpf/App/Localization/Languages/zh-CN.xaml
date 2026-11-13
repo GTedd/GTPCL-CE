@@ -2534,6 +2534,7 @@
     <sys:String x:Key="Select.Instance.Card.Forge">Forge 实例</sys:String>
     <sys:String x:Key="Select.Instance.Card.Hidden">隐藏的实例</sys:String>
     <sys:String x:Key="Select.Instance.Card.LabyMod">LabyMod 实例</sys:String>
+    <sys:String x:Key="Select.Instance.Card.Horizon">Horizon 实例</sys:String>
     <sys:String x:Key="Select.Instance.Card.LessUsed">不常用实例</sys:String>
     <sys:String x:Key="Select.Instance.Card.LiteLoader">LiteLoader 实例</sys:String>
     <sys:String x:Key="Select.Instance.Card.Modable">可安装模组</sys:String>

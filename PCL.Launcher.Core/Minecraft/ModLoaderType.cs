@@ -10,5 +10,6 @@ public enum ModLoaderType
     Cleanroom,
     Fabric,
     LegacyFabric,
-    LabyMod
+    LabyMod,
+    Horizon
 }

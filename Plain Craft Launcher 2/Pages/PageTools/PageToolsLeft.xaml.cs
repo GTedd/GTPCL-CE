@@ -117,12 +117,6 @@ public partial class PageToolsLeft : IPageView
                     Launcher.frmToolsTest = new PageToolsTest();
                 return Launcher.frmToolsTest;
             }
-            case FormMain.PageSubType.ToolsHorizon:
-            {
-                if (Launcher.frmToolsHorizon is null)
-                    Launcher.frmToolsHorizon = new PageToolsHorizon();
-                return Launcher.frmToolsHorizon;
-            }
             default:
             {
                 throw new Exception("未知的更多子页面种类：" + (int)id);

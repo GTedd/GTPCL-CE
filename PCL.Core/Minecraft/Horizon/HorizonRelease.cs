@@ -20,16 +20,30 @@ public sealed record HorizonRemoteBuild(
     long AssetSize,
     IReadOnlyList<string> AssetUrls,
     IReadOnlyList<string> SumsUrls,
-    IReadOnlyList<string> SignatureUrls);
+    IReadOnlyList<string> SignatureUrls)
+{
+    /// <summary>构建对应的提交（版本号的最后一段）。</summary>
+    public string Commit => Version[(Version.LastIndexOf('-') + 1)..];
+}
 
 /// <summary>
 ///     查询 horizon-rust/horizon 的最新 Nightly。API 先走 GitHub，失败后走 Horizon 官方的只读镜像；
-///     下载地址在 GitHub 直连之外，可以加上用户配置的 GitHub 加速前缀（下载后仍做签名校验，镜像无法篡改）。
+///     下载地址按内置的 GitHub 加速站在前、直连在后排列（下载后仍做签名校验，加速站无法篡改）。
 /// </summary>
 public static class HorizonRelease
 {
     public const string Repository = "horizon-rust/horizon";
     public const string NightlyTag = "nightly";
+
+    /// <summary>
+    ///     内置的 GitHub 下载加速前缀，按实测速度排序；全部失败时回落到直连。
+    /// </summary>
+    public static readonly IReadOnlyList<string> BuiltInGithubProxies =
+    [
+        "https://gh-proxy.org/",
+        "https://gh-proxy.com/",
+        "https://ghfast.top/"
+    ];
 
     private static readonly string[] ApiBases =
     [
@@ -44,13 +58,9 @@ public static class HorizonRelease
         RuntimeInformation.OSArchitecture == Architecture.Arm64 ? "horizon-windows-arm64.zip" : "horizon-windows-x64.zip";
 
     /// <summary>
-    ///     查询最新 Nightly。<paramref name="githubProxyPrefixes" /> 形如 <c>https://example.com/</c>，
-    ///     会拼在 github.com 下载地址前面，按顺序排在直连之前。
+    ///     查询最新 Nightly，下载地址使用内置的加速前缀。
     /// </summary>
-    public static async Task<HorizonRemoteBuild> GetLatestNightlyAsync(
-        HttpClient http,
-        IReadOnlyList<string> githubProxyPrefixes,
-        CancellationToken token = default)
+    public static async Task<HorizonRemoteBuild> GetLatestNightlyAsync(HttpClient http, CancellationToken token = default)
     {
         Exception? last = null;
         foreach (var apiBase in ApiBases)
@@ -66,7 +76,7 @@ public static class HorizonRelease
                 response.EnsureSuccessStatusCode();
                 var json = JsonNode.Parse(await response.Content.ReadAsStringAsync(timeout.Token))?.AsObject()
                            ?? throw new InvalidDataException("GitHub 返回的不是 JSON");
-                return Parse(json, githubProxyPrefixes);
+                return Parse(json, BuiltInGithubProxies);
             }
             catch (Exception ex) when (ex is not OperationCanceledException || !token.IsCancellationRequested)
             {
@@ -75,6 +85,32 @@ public static class HorizonRelease
         }
 
         throw new InvalidOperationException($"无法获取 Horizon 的最新版本：{last?.Message}", last);
+    }
+
+    /// <summary>
+    ///     读取构建所在提交的 research-lock.json，得到它固定的 Minecraft 版本（如 26.3）。
+    /// </summary>
+    public static async Task<string> GetMinecraftVersionAsync(HttpClient http, HorizonRemoteBuild build, CancellationToken token = default)
+    {
+        var direct = $"https://raw.githubusercontent.com/{Repository}/{build.Commit}/research-lock.json";
+        Exception? last = null;
+        foreach (var url in BuiltInGithubProxies.Select(prefix => prefix + direct).Append(direct))
+        {
+            try
+            {
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+                timeout.CancelAfter(TimeSpan.FromSeconds(20));
+                var text = await http.GetStringAsync(url, timeout.Token);
+                return JsonNode.Parse(text)?["minecraft"]?["version"]?.GetValue<string>()
+                       ?? throw new InvalidDataException("research-lock.json 缺少 minecraft.version");
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException || !token.IsCancellationRequested)
+            {
+                last = ex;
+            }
+        }
+
+        throw new InvalidOperationException($"无法获取 Horizon {build.Version} 对应的 Minecraft 版本：{last?.Message}", last);
     }
 
     /// <summary>

@@ -3,6 +3,11 @@ namespace PCL;
 public class McInstallRequest
 {
     /// <summary>
+    ///     欲安装的 Horizon 构建（与其它加载器互斥，装在原版之上）。
+    /// </summary>
+    public PCL.Core.Minecraft.Horizon.HorizonRemoteBuild? horizonBuild = null;
+
+    /// <summary>
     ///     欲下载的 Cleanroom。
     /// </summary>
     public GameDownload.DlCleanroomListEntry? cleanroomEntry = null;

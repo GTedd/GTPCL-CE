@@ -2533,6 +2533,7 @@
     <sys:String x:Key="Select.Instance.Card.Forge">Forge</sys:String>
     <sys:String x:Key="Select.Instance.Card.Hidden">Hidden</sys:String>
     <sys:String x:Key="Select.Instance.Card.LabyMod">LabyMod</sys:String>
+    <sys:String x:Key="Select.Instance.Card.Horizon">Horizon</sys:String>
     <sys:String x:Key="Select.Instance.Card.LessUsed">Less-used</sys:String>
     <sys:String x:Key="Select.Instance.Card.LiteLoader">LiteLoader</sys:String>
     <sys:String x:Key="Select.Instance.Card.Modable">Mod-installable</sys:String>
