@@ -82,7 +82,10 @@ public static partial class GameLaunch
             StandardErrorEncoding = Encoding.UTF8
         };
         foreach (var argument in arguments) info.ArgumentList.Add(argument);
-        McLaunchLog($"启动 Horizon：{info.FileName} {string.Join(' ', arguments)}");
+        // 玩家名：微软账号由会话决定，离线/外置账号用启动器里选定的用户名（否则 Horizon 会自己生成 PlayerXXXXX）
+        if (!string.IsNullOrWhiteSpace(login.Name))
+            info.Environment["HORIZON_PLAYER_NAME"] = login.Name;
+        McLaunchLog($"启动 Horizon：{info.FileName} {string.Join(' ', arguments)}（玩家名 {login.Name}）");
 
         var process = new Process { StartInfo = info, EnableRaisingEvents = true };
         _horizonLastError = "";
