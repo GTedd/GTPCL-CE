@@ -105,6 +105,8 @@ public static partial class Config
         // [ConfigItem<int>("ToolUpdateAlpha", 0, ConfigSource.SharedEncrypt)] public partial int Alpha { get; set; }
         [ConfigItem<bool>("ToolUpdateRelease", false)] public partial bool ReleaseNotification { get; set; }
         [ConfigItem<bool>("ToolUpdateSnapshot", false)] public partial bool SnapshotNotification { get; set; }
+        /// <summary>Horizon 构建下载用的 GitHub 加速前缀，每行一个，拼在 github.com 地址之前；下载后仍校验签名。</summary>
+        [ConfigItem<string>("ToolHorizonGithubProxy", "")] public partial string HorizonGithubProxy { get; set; }
     }
 
     /// <summary>

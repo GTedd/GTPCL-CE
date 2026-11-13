@@ -1500,6 +1500,7 @@ public partial class FormMain
 
         ToolsGameLink = 1,
         ToolsTest = 3,
+        ToolsHorizon = 4,
 
         VersionOverall = 0,
         VersionSetup = 1,

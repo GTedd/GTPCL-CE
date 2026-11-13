@@ -1,0 +1,33 @@
+﻿<local:MyPageRight x:Class="PCL.PageToolsHorizon"
+                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                   xmlns:local="clr-namespace:PCL"
+                   PanScroll="{Binding ElementName=PanBack}">
+    <local:MyScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" x:Name="PanBack">
+        <StackPanel x:Name="PanMain" Margin="25,10">
+            <local:MyCard Margin="0,15" Title="Horizon">
+                <StackPanel Margin="25,40,25,20">
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,10"
+                               Text="Horizon 是用 Rust 重写的 Minecraft Java 版 26.3（非官方，horizon-rust/horizon）。它不含任何 Minecraft 文件，资源从本机已安装的原版 26.3 准备；启动需要拥有 Java 版的微软账号。" />
+                    <TextBlock x:Name="TextStatus" TextWrapping="Wrap" Margin="0,0,0,15" Opacity="0.8" />
+                    <WrapPanel ItemHeight="45">
+                        <local:MyButton x:Name="BtnLaunch" MinWidth="120" Text="启动 Horizon" Margin="0,0,15,10"
+                                        ColorType="Highlight" Click="BtnLaunch_Click" />
+                        <local:MyButton x:Name="BtnUpdate" MinWidth="120" Text="检查更新" Margin="0,0,15,10"
+                                        Click="BtnUpdate_Click" />
+                        <local:MyButton MinWidth="120" Text="打开文件夹" Margin="0,0,15,10"
+                                        Click="BtnFolder_Click" />
+                    </WrapPanel>
+                </StackPanel>
+            </local:MyCard>
+            <local:MyCard Margin="0,0,0,15" Title="下载加速">
+                <StackPanel Margin="25,40,25,20">
+                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,10"
+                               Text="Horizon 构建从 GitHub 下载。可以填写 GitHub 加速前缀（每行一个，如 https://example.com/），会拼在 github.com 下载地址之前，失败后再直连。下载的文件都会校验 Horizon 的发布签名，加速站无法篡改。Minecraft 文件优先使用本机已有的，缺少的版本文件与服务端走 BMCLAPI 镜像。" />
+                    <local:MyTextBox x:Name="TextProxy" AcceptsReturn="True" TextWrapping="Wrap" Height="70"
+                                     VerticalContentAlignment="Top" LostFocus="TextProxy_LostFocus" />
+                </StackPanel>
+            </local:MyCard>
+        </StackPanel>
+    </local:MyScrollViewer>
+</local:MyPageRight>
