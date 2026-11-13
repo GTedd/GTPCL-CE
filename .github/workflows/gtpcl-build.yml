@@ -49,6 +49,24 @@ jobs:
             exit 1
           fi
 
+  test:
+    name: Test (GTPCL additions)
+    needs: guard
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 11.0.x
+
+      - name: Run tests
+        run: dotnet test PCL.Core.Test/PCL.Core.Test.csproj -p:Configuration=CI -p:Platform=x64 --filter "FullyQualifiedName~Horizon"
+
   build:
     name: Build (CI, x64)
     needs: guard
