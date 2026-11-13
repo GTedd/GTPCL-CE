@@ -1,0 +1,89 @@
+name: GTPCL Build
+
+# GTPCL-CE 自己的构建：只出 x64 的 CI 构建产物，保留 14 天。
+# 上游的 build-test.yml 在本仓库里通过 Actions 页面停用，避免重复构建；
+# 本文件是新增文件，合并上游时不会冲突。
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [dev]
+    paths-ignore:
+      - '**/*.md'
+      - '**/LICENSE'
+      - '**/.editorconfig'
+      - '**/.gitignore'
+      - '**/.gitattributes'
+      - 'PCL.Core.Test/**'
+      - '.github/ISSUE_TEMPLATE/**'
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Commit to build (defaults to the triggering commit)'
+        required: false
+        type: string
+        default: ''
+
+concurrency:
+  group: gtpcl-build-${{ inputs.ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    name: Region restriction stays removed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Check for region restriction code
+        run: |
+          if git grep -n -E 'RegionPolicy|RestrictedFeaturePolicy|IRestrictedFeatures|Region\.Feature\.Restricted' -- . ':(exclude).github'; then
+            echo "::error::Upstream region restriction code is present again; remove it before building."
+            exit 1
+          fi
+
+  build:
+    name: Build (CI, x64)
+    needs: guard
+    runs-on: ubuntu-latest
+    env:
+      LANG: en_US.UTF-8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Short SHA
+        run: echo "short_sha=$(git rev-parse --short=8 HEAD)" >> "$GITHUB_ENV"
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 11.0.x
+
+      - name: Build Project
+        env:
+          PCL_WRITE_SECRET: '1'
+          PCL_MS_CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          PCL_CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+          PCL_GITHUB_SHA: ${{ inputs.ref || github.sha }}
+        run: |
+          dotnet publish "Plain Craft Launcher 2/Plain Craft Launcher 2.csproj" \
+          -p:Configuration=CI -p:Platform=x64 \
+          -p:DeleteExistingFiles=true -o ./artifact --no-self-contained
+
+      - name: Upload the Build Artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: GTPCL-CE_CI_x64_${{ env.short_sha }}
+          path: artifact/**
+          retention-days: 14
+          if-no-files-found: error

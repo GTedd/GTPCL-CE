@@ -1,0 +1,76 @@
+name: GTPCL Sync upstream
+
+# 每天把上游 PCL-Community/PCL-CE 的 dev 合并进本仓库 dev，然后构建。
+# - 有冲突：不推送，任务失败并列出冲突文件，需要手动合并。
+# - 合并后若上游又带回了区域限制代码：不推送，任务失败。
+# - 上游改了 .github/workflows 时，默认的 GITHUB_TOKEN 无权推送；
+#   需要在仓库 Secrets 里配置 SYNC_TOKEN（带 contents + workflows 写权限的 PAT）。
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '17 20 * * *' # 04:17 UTC+8
+  workflow_dispatch:
+
+concurrency:
+  group: gtpcl-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Merge upstream dev
+    runs-on: ubuntu-latest
+    outputs:
+      merged: ${{ steps.merge.outputs.merged }}
+      sha: ${{ steps.merge.outputs.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: dev
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN || github.token }}
+
+      - name: Merge upstream
+        id: merge
+        run: |
+          git config user.name "GTedd"
+          git config user.email "147307884+GTedd@users.noreply.github.com"
+          git remote add upstream https://github.com/PCL-Community/PCL-CE.git
+          git fetch --no-tags upstream dev
+          if git merge-base --is-ancestor upstream/dev HEAD; then
+            echo "Already up to date with upstream."
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          upstream_sha=$(git rev-parse --short=9 upstream/dev)
+          if ! git merge --no-ff --no-edit -m "chore(sync): merge upstream PCL-CE dev ($upstream_sha)" upstream/dev; then
+            echo "::error::Merge conflict with upstream $upstream_sha. Conflicted files:"
+            git diff --name-only --diff-filter=U
+            git merge --abort
+            exit 1
+          fi
+          if git grep -n -E 'RegionPolicy|RestrictedFeaturePolicy|IRestrictedFeatures|Region\.Feature\.Restricted' -- . ':(exclude).github'; then
+            echo "::error::Upstream $upstream_sha brings region restriction code back; merge manually."
+            exit 1
+          fi
+          echo "merged=true" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Push
+        if: steps.merge.outputs.merged == 'true'
+        run: |
+          if ! git push origin HEAD:dev; then
+            echo "::error::Push rejected. If upstream changed .github/workflows, add a SYNC_TOKEN secret with workflows permission."
+            exit 1
+          fi
+
+  build:
+    needs: sync
+    if: needs.sync.outputs.merged == 'true'
+    uses: ./.github/workflows/gtpcl-build.yml
+    with:
+      ref: ${{ needs.sync.outputs.sha }}
+    secrets: inherit
