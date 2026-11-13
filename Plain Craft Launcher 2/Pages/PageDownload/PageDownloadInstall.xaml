@@ -47,10 +47,10 @@
                                              HasBackground="False" TextChanged="TextSelectName_TextChanged"
                                              ValidateChanged="TextSelectName_ValidateChanged" KeyDown="TextSelectName_KeyDown" />
                         </local:MyCard>
-                        <local:MyHint Text="{loc:Loc Download.Install.Warning.FabricApi}" Margin="0,10,0,0" x:Name="HintFabricAPI" Visibility="{Binding ShowHintFabricAPI, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        <local:MyHint Text="{loc:Loc Download.Install.Warning.FabricApi}" Margin="0,10,0,0" x:Name="HintFabricAPI" Visibility="Collapsed"
                                       Theme="Red" />
                         <local:MyHint Text="{loc:Loc Download.Install.Warning.LegacyFabricApi}" Margin="0,10,0,0"
-                                      x:Name="HintLegacyFabricAPI" Visibility="{Binding ShowHintLegacyFabricAPI, Converter={StaticResource BooleanToVisibilityConverter}}" Theme="Red" />
+                                      x:Name="HintLegacyFabricAPI" Visibility="Collapsed" Theme="Red" />
                         <local:MyHint Text="{loc:Loc Download.Install.Warning.OptiFabric}" Margin="0,10,0,0" x:Name="HintOptiFabric" Visibility="{Binding ShowHintOptiFabric, Converter={StaticResource BooleanToVisibilityConverter}}"
                                       Theme="Red" />
                         <local:MyHint Text="{loc:Loc Download.Install.Warning.OptiFabricOld}"

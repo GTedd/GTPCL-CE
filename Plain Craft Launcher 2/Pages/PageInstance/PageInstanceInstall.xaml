@@ -26,10 +26,10 @@
                                       Margin="0,10,0,0" x:Name="HintLegacyOptiFabric" Visibility="{Binding ShowHintLegacyOptiFabric, Converter={StaticResource BooleanToVisibilityConverter}}" Theme="Yellow" />
                         <local:MyHint Text="{loc:Loc Download.Install.Warning.LegacyFabricApi}"
                                       Margin="0,10,0,0"
-                                      x:Name="HintLegacyFabricAPI" Visibility="{Binding ShowHintLegacyFabricAPI, Converter={StaticResource BooleanToVisibilityConverter}}" Theme="Red" />
+                                      x:Name="HintLegacyFabricAPI" Visibility="Collapsed" Theme="Red" />
                         <local:MyHint Text="{loc:Loc Download.Install.Warning.FabricApi}"
                                        Margin="0,1,0,7"
-                                       x:Name="HintFabricAPI" Visibility="{Binding ShowHintFabricAPI, Converter={StaticResource BooleanToVisibilityConverter}}" IsWarn="True" />
+                                       x:Name="HintFabricAPI" Visibility="Collapsed" IsWarn="True" />
                         <local:MyHint Text="{loc:Loc Download.Install.Warning.OptiFabric}"
                                       Margin="0,1,0,7"
                                       x:Name="HintOptiFabric" Visibility="{Binding ShowHintOptiFabric, Converter={StaticResource BooleanToVisibilityConverter}}" IsWarn="True" />
