@@ -34,6 +34,20 @@ public static class ServerAddressResolver
     private static readonly Regex _TrailingPort =
         new(@":(?<port>\d{1,5})$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    /// <summary>
+    /// 把玩家填写的地址拆成主机与端口，不做任何网络请求。支持 <c>host</c>、<c>host:port</c>、<c>[IPv6]:port</c>、
+    /// 裸 IPv6 与带 scheme 的写法。
+    /// </summary>
+    /// <returns>主机名或 IP；端口未填写时为 null。</returns>
+    /// <exception cref="ArgumentException">地址为空。</exception>
+    /// <exception cref="FormatException">地址或端口格式无效。</exception>
+    public static (string Host, int? Port) ParseAddress(string address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+            throw new ArgumentException("服务器地址不能为空", nameof(address));
+        return _ParseHostAndPort(_NormalizeInput(address));
+    }
+
     public static async Task<ResolvedServerAddress> GetResolvedServerAddressAsync(string address, CancellationToken cancelToken = default)
     {
         if (string.IsNullOrWhiteSpace(address))
@@ -90,7 +104,15 @@ public static class ServerAddressResolver
                 }
             }
 
-            // SRV 全部不可达则回退到 SRV 第一条的解析 IP 或域名默认端口
+            // SRV 目标全部不可达时，先试一下域名本身的默认端口（SRV 记录过期而 A 记录仍有效的情况）
+            var direct = await _ResolveReachableAsync(idnHost, DefaultPort, cancelToken).ConfigureAwait(false);
+            if (direct is not null)
+            {
+                LogWrapper.Info($"SRV 目标均不可达，回退到域名默认端口：{idnHost}:{DefaultPort} -> {direct.Value.Ip}");
+                return new ResolvedServerAddress(idnHost, direct.Value.Ip, direct.Value.Port);
+            }
+
+            // 仍不可达则回退到 SRV 第一条的解析 IP 或域名默认端口
             var first = srvOrdered[0];
             var firstIp = await _ResolveFirstIpAsync(_TrimTrailingDot(first.Target), cancelToken).ConfigureAwait(false);
             if (!string.IsNullOrEmpty(firstIp)) return new ResolvedServerAddress(idnHost, firstIp, first.Port);

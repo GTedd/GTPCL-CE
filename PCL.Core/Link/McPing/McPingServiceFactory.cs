@@ -65,4 +65,15 @@ public static class McPingServiceFactory
     {
         return new LegacyMcPingService(ip, port, timeout);
     }
+
+    /// <summary>
+    /// 创建基岩版探测服务
+    /// </summary>
+    /// <param name="endpoint">服务器端点（UDP）</param>
+    /// <param name="timeout">超时时间（毫秒）</param>
+    /// <returns>IMcPingService实例</returns>
+    public static IMcPingService CreateBedrockService(IPEndPoint endpoint, int timeout = 3000)
+    {
+        return new BedrockPingService(endpoint, timeout);
+    }
 }

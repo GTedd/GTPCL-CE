@@ -1053,7 +1053,7 @@ public partial class FormMain
                 var allSameType = filePathList.All(f => (f.AfterLast(".").ToLower() ?? "") == (firstExtension ?? ""));
 
                 if (allSameType &&
-                    new[] { "jar", "litemod", "disabled", "old", "litematic", "nbt", "schematic", "schem" }.Contains(
+                    new[] { "jar", "litemod", "disabled", "old", "litematic", "nbt", "schematic", "schem", "hmod", "hnmod", "hshader" }.Contains(
                         firstExtension))
                 {
                 }
@@ -1087,6 +1087,21 @@ public partial class FormMain
                     Launcher.frmLaunchRight.ForceRefresh();
                     HintService.Show(Hints.Success(Lang.Text("Main.FileDrag.HomepageLoaded")));
                 });
+                return;
+            }
+
+            // Horizon 模组与光影包
+            if (extension is "hmod" or "hnmod")
+            {
+                Common.Log($"[System] 文件为 {extension} 格式，作为 Horizon 模组安装");
+                PageInstanceHorizonMods.InstallFiles(filePathList);
+                return;
+            }
+
+            if (extension == "hshader")
+            {
+                Common.Log("[System] 文件为 hshader 格式，作为 Horizon 光影包添加");
+                PageInstanceHorizonPacks.AddFilesToCurrentInstance(filePathList);
                 return;
             }
 

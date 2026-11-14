@@ -1,0 +1,64 @@
+<local:MyPageRight x:Class="PCL.PageInstanceHorizonPacks"
+                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                   xmlns:local="clr-namespace:PCL"
+                   xmlns:loc="https://ce.pclc.cc/core/localization"
+                   mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="800"
+                   PanScroll="{Binding ElementName=PanBack}" AllowDrop="True">
+    <local:MyScrollViewer x:Name="PanBack" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Hidden">
+        <StackPanel Margin="25,25,25,10">
+            <local:MyCard Title="{loc:Loc Instance.Horizon.Packs.Title}" Margin="0,0,0,15">
+                <StackPanel Margin="25,40,23,15">
+                    <TextBlock x:Name="LabTip" TextWrapping="Wrap" Margin="0,0,0,12"
+                               Foreground="{DynamicResource ColorBrushGray3}"
+                               Text="{loc:Loc Instance.Horizon.Packs.Tip}" />
+                    <WrapPanel>
+                        <local:MyButton MinWidth="130" Height="35" Padding="13,0" Margin="0,0,12,8" ColorType="Highlight"
+                                        Text="{loc:Loc Instance.Horizon.Packs.Add}" Click="BtnAdd_Click" />
+                        <local:MyButton MinWidth="130" Height="35" Padding="13,0" Margin="0,0,12,8"
+                                        Text="{loc:Loc Instance.Horizon.Packs.Browse}" Click="BtnBrowse_Click" />
+                        <local:MyButton MinWidth="120" Height="35" Padding="13,0" Margin="0,0,12,8"
+                                        Text="{loc:Loc Instance.Horizon.Packs.OpenResource}" Click="BtnOpenResource_Click" />
+                        <local:MyButton MinWidth="120" Height="35" Padding="13,0" Margin="0,0,12,8"
+                                        Text="{loc:Loc Instance.Horizon.Packs.OpenShader}" Click="BtnOpenShader_Click" />
+                        <local:MyButton MinWidth="100" Height="35" Padding="13,0" Margin="0,0,12,8"
+                                        Text="{loc:Loc Instance.Horizon.Mods.Refresh}" Click="BtnRefresh_Click" />
+                    </WrapPanel>
+                </StackPanel>
+            </local:MyCard>
+
+            <local:MyCard x:Name="CardShaders" Title="{loc:Loc Instance.Horizon.Packs.Shaders}" Margin="0,0,0,15">
+                <StackPanel Margin="12,38,12,12">
+                    <TextBlock x:Name="LabShadersEmpty" Margin="13,0,13,4" TextWrapping="Wrap"
+                               Foreground="{DynamicResource ColorBrushGray3}" Text="{loc:Loc Instance.Horizon.Packs.ShadersEmpty}" />
+                    <StackPanel x:Name="PanShaders" />
+                </StackPanel>
+            </local:MyCard>
+
+            <local:MyCard x:Name="CardResources" Title="{loc:Loc Instance.Horizon.Packs.Resources}" Margin="0,0,0,15">
+                <StackPanel Margin="12,38,12,12">
+                    <TextBlock x:Name="LabResourcesEmpty" Margin="13,0,13,4" TextWrapping="Wrap"
+                               Foreground="{DynamicResource ColorBrushGray3}" Text="{loc:Loc Instance.Horizon.Packs.ResourcesEmpty}" />
+                    <StackPanel x:Name="PanResources" />
+                </StackPanel>
+            </local:MyCard>
+
+            <local:MyCard x:Name="CardDataPacks" Title="{loc:Loc Instance.Horizon.Packs.DataPacks}" Margin="0,0,0,15">
+                <StackPanel Margin="25,40,23,12">
+                    <WrapPanel Margin="0,0,0,8">
+                        <local:MyComboBox x:Name="ComboWorld" Width="220" Height="35" Margin="0,0,12,8" SelectionChanged="ComboWorld_Changed" />
+                        <local:MyButton MinWidth="130" Height="35" Padding="13,0" Margin="0,0,12,8"
+                                        Text="{loc:Loc Instance.Horizon.Packs.AddDataPack}" Click="BtnAddDataPack_Click" />
+                        <local:MyButton MinWidth="120" Height="35" Padding="13,0" Margin="0,0,12,8"
+                                        Text="{loc:Loc Instance.Horizon.Packs.OpenDataPacks}" Click="BtnOpenDataPacks_Click" />
+                    </WrapPanel>
+                    <TextBlock x:Name="LabDataPacksEmpty" Margin="0,0,0,4" TextWrapping="Wrap"
+                               Foreground="{DynamicResource ColorBrushGray3}" Text="{loc:Loc Instance.Horizon.Packs.DataPacksEmpty}" />
+                    <StackPanel x:Name="PanDataPacks" Margin="-13,0,-11,0" />
+                </StackPanel>
+            </local:MyCard>
+        </StackPanel>
+    </local:MyScrollViewer>
+</local:MyPageRight>

@@ -64,6 +64,18 @@ public static class HorizonProcess
     }
 
     /// <summary>
+    ///     读取 <c>horizon-client --launch-api</c> 的 <c>content</c>：这个构建能加载哪些内容（docs/api/content.md）。
+    ///     构建较旧、没有 <c>content</c> 时返回 <see cref="HorizonContentSupport.Unknown" />。
+    /// </summary>
+    public static async Task<HorizonContentSupport> QueryContentSupportAsync(string buildDir, CancellationToken token = default)
+    {
+        var (exitCode, stdout, stderr) = await _RunToEndAsync(Path.Combine(buildDir, ClientExe), ["--launch-api"], buildDir, token);
+        if (exitCode != 0)
+            throw new InvalidOperationException($"这个 Horizon 构建不支持 Launch API（horizon-client 退出码 {exitCode}）：{_LastLine(stderr)}");
+        return HorizonContentSupport.Parse(JsonNode.Parse(stdout)?["content"] as JsonObject);
+    }
+
+    /// <summary>
     ///     <c>horizon-prepare --check --output PREPARED</c>：资源完整且与该构建匹配时返回 null，否则返回缺口说明。
     /// </summary>
     public static async Task<string?> CheckPreparedAsync(string buildDir, string preparedDir, CancellationToken token = default)

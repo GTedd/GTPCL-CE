@@ -50,7 +50,16 @@ public static partial class GameLaunch
     private static void _HorizonRun(Loading.LoaderTask<int, Process> loader)
     {
         var instance = InstanceList.McMcInstanceSelected!;
-        var buildDir = HorizonInstance.BuildDir(instance.PathInstance.TrimEnd('\\'));
+        // 打开的原生模组已编进原生构建时启动它，否则启动 Nightly 原版构建
+        var native = HorizonNativeBuild.GetStatus(instance);
+        var buildDir = HorizonNativeBuild.PlayedBuildDir(instance);
+        if (native.State is HorizonNativeState.NotBuilt or HorizonNativeState.NeedsRebuild)
+        {
+            McLaunchLog($"Horizon 原生模组状态：{native.State}，本次启动不含未编译的原生模组");
+            LauncherUi.Interaction?.ShowHint(
+                "有原生模组还没编译进游戏，本次启动不包含它们：请在实例的模组页点击“构建”。", NotificationType.Info);
+        }
+        McLaunchLog($"Horizon 构建：{buildDir}");
         var gameDir = instance.PathIndie.TrimEnd('\\');
         Directory.CreateDirectory(gameDir);
         var options = HorizonProcess.QueryClientOptionsAsync(buildDir, loader.AbortedToken).GetAwaiter().GetResult();

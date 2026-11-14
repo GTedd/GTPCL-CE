@@ -77,7 +77,8 @@ public partial class ServerCard
             ToolTipService.SetBetweenShowDelay(Signal, 50);
             ToolTipService.SetPlacement(Signal, PlacementMode.Top);
 
-            if (server.PlayerCount != default && server.MaxPlayers != default)
+            // 在线 0 人也是有效信息，只有人数上限与在线人数都没有给出时才显示 ???
+            if (server.MaxPlayers > 0 || server.PlayerCount > 0)
                 _vm.PlayerText = $"{server.PlayerCount} / {server.MaxPlayers}";
             else
                 _vm.PlayerText = "???";
@@ -97,6 +98,8 @@ public partial class ServerCard
         else if (server.Status == ServerStatus.Offline)
         {
             _manager.SetSelectedIconByName("signal_offline");
+            // 悬停离线图标可查看失败原因
+            Signal.ToolTip = string.IsNullOrWhiteSpace(server.FailureReason) ? null : server.FailureReason;
             MotdRenderer.ClearCanvas();
             _vm.PlayerText = Lang.Text("Instance.Server.Card.Offline");
             _vm.MotdText = Lang.Text("Instance.Server.Card.ServerOffline");

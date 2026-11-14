@@ -69,6 +69,11 @@ public static partial class States
         [ConfigItem<bool>("HintUpdateMod", false)] public partial bool UpdateMod { get; set; }
 
         /// <summary>
+        /// Horizon 原生模组不在沙盒中运行的提示（首次安装原生模组时显示一次）。
+        /// </summary>
+        [ConfigItem<bool>("HintHorizonNativeTrust", false)] public partial bool HorizonNativeTrust { get; set; }
+
+        /// <summary>
         /// 执行自定义主页内含命令提示。
         /// </summary>
         [ConfigItem<bool>("HintCustomCommand", false)] public partial bool HomepageCommand { get; set; }
@@ -285,6 +290,11 @@ public static partial class States
         /// 最新 MC 快照版
         /// </summary>
         [ConfigItem<string>("ToolUpdateSnapshotLast", "")] public partial string LastSnapshot { get; set; }
+
+        /// <summary>
+        /// Horizon 原生构建的编译配置：0 性能（默认）、1 开发、2 发布。
+        /// </summary>
+        [ConfigItem<int>("ToolHorizonNativeProfile", 0)] public partial int HorizonNativeProfile { get; set; }
     }
 
     /// <summary>

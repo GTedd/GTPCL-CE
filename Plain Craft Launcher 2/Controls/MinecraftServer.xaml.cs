@@ -1,7 +1,6 @@
 ﻿using PCL.Core.App.Localization;
 using PCL.Core.Link.McPing;
 using PCL.Core.Link.McPing.Model;
-using PCL.Core.Minecraft;
 using PCL.Core.UI;
 using System.Windows;
 using System.Windows.Controls;
@@ -50,26 +49,21 @@ public partial class MinecraftServer : Grid
 
         try
         {
-            // 获取可达地址（DNS解析）
-            var addr = await ServerAddressResolver.GetResolvedServerAddressAsync(address);
+            // 解析地址并查询（Java 版各协议依次尝试，基岩版兜底）
+            var ret = await McServerQuery.QueryAsync(address);
 
-            // Ping服务器
-            using (var query = McPingServiceFactory.CreateService(addr.Host, addr.Ip, addr.Port))
-            {
-                var ret = await query.PingAsync();
+            // 处理服务器图标
+            await ImageLoaderHelper.SetServerLogoAsync(ret.Favicon, ImgServerLogo);
 
-                if (ret is null) throw new Exception(Lang.Text("Tools.ServerQuery.State.NoInfo"));
-
-                // 处理服务器图标
-                await ImageLoaderHelper.SetServerLogoAsync(ret.Favicon, ImgServerLogo);
-
-                // 更新UI
-                UpdateServerStatus(ret);
-            }
+            // 更新UI
+            UpdateServerStatus(ret);
         }
         catch (Exception ex)
         {
-            Common.Log(ex, "[MinecraftServer] 信息查询失败");
+            if (ex is McPingException)
+                Common.Log($"[MinecraftServer] 信息查询失败: {address}: {ex.Message}");
+            else
+                Common.Log(ex, "[MinecraftServer] 信息查询失败");
             LocalizedText.TryBind(
                 LabServerDesc,
                 "Text",

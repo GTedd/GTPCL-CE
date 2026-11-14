@@ -88,6 +88,39 @@ public static class HorizonRelease
     }
 
     /// <summary>
+    ///     查询提交：把短提交号或标签解析为 40 位提交号，并给出提交者时间（ISO 8601）。
+    /// </summary>
+    public static async Task<(string Sha, string Date)> GetCommitAsync(
+        HttpClient http, string repository, string reference, CancellationToken token = default)
+    {
+        Exception? last = null;
+        foreach (var apiBase in ApiBases)
+        {
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, $"{apiBase}/repos/{repository}/commits/{reference}");
+                request.Headers.UserAgent.ParseAdd("GTPCL-CE");
+                request.Headers.Accept.ParseAdd("application/vnd.github+json");
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+                timeout.CancelAfter(TimeSpan.FromSeconds(30));
+                using var response = await http.SendAsync(request, timeout.Token);
+                response.EnsureSuccessStatusCode();
+                var json = JsonNode.Parse(await response.Content.ReadAsStringAsync(timeout.Token))?.AsObject()
+                           ?? throw new InvalidDataException("GitHub 返回的不是 JSON");
+                var sha = json["sha"]?.GetValue<string>();
+                if (sha is null || sha.Length != 40) throw new InvalidDataException("GitHub 返回的提交号无效");
+                return (sha, json["commit"]?["committer"]?["date"]?.GetValue<string>() ?? "");
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException || !token.IsCancellationRequested)
+            {
+                last = ex;
+            }
+        }
+
+        throw new InvalidOperationException($"无法查询 {repository} 的提交 {reference}：{last?.Message}", last);
+    }
+
+    /// <summary>
     ///     读取构建所在提交的 research-lock.json，得到它固定的 Minecraft 版本（如 26.3）。
     /// </summary>
     public static async Task<string> GetMinecraftVersionAsync(HttpClient http, HorizonRemoteBuild build, CancellationToken token = default)

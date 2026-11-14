@@ -65,7 +65,7 @@ jobs:
           dotnet-version: 11.0.x
 
       - name: Run tests
-        run: dotnet test PCL.Core.Test/PCL.Core.Test.csproj -p:Configuration=CI -p:Platform=x64 --filter "FullyQualifiedName~Horizon"
+        run: dotnet test PCL.Core.Test/PCL.Core.Test.csproj -p:Configuration=CI -p:Platform=x64 --filter "FullyQualifiedName~Horizon|FullyQualifiedName~McServerQuery"
 
   build:
     name: Build (CI, x64)

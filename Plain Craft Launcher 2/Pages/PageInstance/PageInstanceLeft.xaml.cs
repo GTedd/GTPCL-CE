@@ -46,6 +46,9 @@ public partial class PageInstanceLeft : IRefreshable, IPageView
         Refresh(Launcher.frmMain.PageCurrentSub);
     }
 
+    /// <summary>当前实例是否为 Horizon 实例。</summary>
+    private static bool _IsHorizon => HorizonInstance.IsHorizon(McInstance);
+
     public void RefreshModDisabled()
     {
         _vm.RefreshModDisabled(McInstance);
@@ -57,7 +60,8 @@ public partial class PageInstanceLeft : IRefreshable, IPageView
         {
             case FormMain.PageSubType.VersionMod:
                 {
-                    PageInstanceCompResource.Refresh(Comp.CompType.Mod);
+                    if (_IsHorizon) Launcher.frmInstanceHorizonMods?.Reload();
+                    else PageInstanceCompResource.Refresh(Comp.CompType.Mod);
                     break;
                 }
             case FormMain.PageSubType.VersionScreenshot:
@@ -72,12 +76,14 @@ public partial class PageInstanceLeft : IRefreshable, IPageView
                 }
             case FormMain.PageSubType.VersionResourcePack:
                 {
-                    PageInstanceCompResource.Refresh(Comp.CompType.ResourcePack);
+                    if (_IsHorizon) Launcher.frmInstanceHorizonPacks?.Reload();
+                    else PageInstanceCompResource.Refresh(Comp.CompType.ResourcePack);
                     break;
                 }
             case FormMain.PageSubType.VersionShader:
                 {
-                    PageInstanceCompResource.Refresh(Comp.CompType.Shader);
+                    if (_IsHorizon) Launcher.frmInstanceHorizonPacks?.Reload();
+                    else PageInstanceCompResource.Refresh(Comp.CompType.Shader);
                     break;
                 }
             case FormMain.PageSubType.VersionSchematic:
@@ -173,6 +179,13 @@ public partial class PageInstanceLeft : IRefreshable, IPageView
                 }
             case FormMain.PageSubType.VersionMod:
                 {
+                    // Horizon 实例的模组是 .hmod / .hnmod，有自己的模组页
+                    if (_IsHorizon)
+                    {
+                        Launcher.frmInstanceHorizonMods ??= new PageInstanceHorizonMods();
+                        return Launcher.frmInstanceHorizonMods;
+                    }
+
                     Launcher.frmInstanceMod ??= new PageInstanceCompResource(Comp.CompType.Mod);
                     return Launcher.frmInstanceMod;
                 }
@@ -202,7 +215,15 @@ public partial class PageInstanceLeft : IRefreshable, IPageView
                     return Launcher.frmInstanceScreenshot;
                 }
             case FormMain.PageSubType.VersionResourcePack:
+            case FormMain.PageSubType.VersionShader when _IsHorizon:
                 {
+                    // Horizon 的光影、资源包与数据包按它自己的规则开关，合在一页
+                    if (_IsHorizon)
+                    {
+                        Launcher.frmInstanceHorizonPacks ??= new PageInstanceHorizonPacks();
+                        return Launcher.frmInstanceHorizonPacks;
+                    }
+
                     Launcher.frmInstanceResourcePack ??= new PageInstanceCompResource(Comp.CompType.ResourcePack);
                     return Launcher.frmInstanceResourcePack;
                 }

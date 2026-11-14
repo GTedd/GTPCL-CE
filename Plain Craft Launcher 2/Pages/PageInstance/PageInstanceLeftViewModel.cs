@@ -42,7 +42,7 @@ public partial class PageInstanceLeftViewModel : ViewModelBase
     {
         var hide = Config.Preference.Hide;
 
-        if (instance is not null && instance.Modable)
+        if (instance is not null && (instance.Modable || HorizonInstance.IsHorizon(instance)))
         {
             ItemModVisible = PageSetupUI.HiddenForceShow || !hide.InstanceMod;
             ItemModDisabledVisible = false;

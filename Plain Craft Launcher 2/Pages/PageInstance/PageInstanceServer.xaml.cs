@@ -416,36 +416,35 @@ public partial class PageInstanceServer : MyPageRight, IPageView
     {
         try
         {
-            var addr = await ServerAddressResolver.GetResolvedServerAddressAsync(server.Address, token).ConfigureAwait(true);
-            using (var query = McPingServiceFactory.CreateService(addr.Host, addr.Ip, addr.Port))
-            {
-                Common.Log("Pinging server: " + server.Address + ":" + addr.Port);
-                var result = await query.PingAsync(token).ConfigureAwait(true);
-                Common.Log("Ping result: " + (result is not null ? "Success" : "Failed"));
-                if (result is not null)
-                {
-                    server.Status = ServerStatus.Online;
-                    server.PlayerCount = result.Players.Online;
-                    server.MaxPlayers = result.Players.Max;
-                    server.Description = result.Description;
-                    server.Version = result.Version.Name;
-                    server.Ping = (int)result.Latency;
-                    server.Icon = result.Favicon;
-                }
-                else
-                {
-                    server.Status = ServerStatus.Offline;
-                }
-            }
+            Common.Log("Pinging server: " + server.Address);
+            var result = await McServerQuery.QueryAsync(server.Address, cancellationToken: token).ConfigureAwait(true);
+            Common.Log($"Ping result: Success ({result.Edition}, {result.Latency}ms)");
+            server.Status = ServerStatus.Online;
+            server.FailureReason = null;
+            server.PlayerCount = result.Players.Online;
+            server.MaxPlayers = result.Players.Max;
+            server.Description = result.Description;
+            server.Version = result.Version.Name;
+            server.Ping = (int)result.Latency;
+            server.Icon = result.Favicon ?? string.Empty;
         }
         catch (OperationCanceledException)
         {
             server.Status = ServerStatus.Offline;
+            server.FailureReason = null;
             Common.Log("Ping 服务器被取消: " + server.Address, Common.LogLevel.Debug);
+        }
+        catch (McPingException ex)
+        {
+            // 服务器离线是常态，只记日志，不弹窗
+            server.Status = ServerStatus.Offline;
+            server.FailureReason = ex.Message;
+            Common.Log($"Ping 服务器失败: {server.Address}: {ex.Message}");
         }
         catch (Exception ex)
         {
             server.Status = ServerStatus.Offline;
+            server.FailureReason = ex.Message;
             Common.Log(ex, $"Ping 服务器失败: {server.Address}:{server.Port}");
         }
 
@@ -466,6 +465,9 @@ public class MinecraftServerInfo
     public string Version { get; set; } = "";
     public int Ping { get; set; }
     public string Icon { get; set; } = "";
+
+    /// <summary>最近一次查询失败的原因，查询成功时为 null。</summary>
+    public string? FailureReason { get; set; }
 }
 
 /// <summary>服务器状态。</summary>

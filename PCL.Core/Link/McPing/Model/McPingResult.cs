@@ -9,4 +9,9 @@ public record McPingResult(
     [property: JsonPropertyName("favicon")] string? Favicon,
     [property: JsonPropertyName("latency")] long Latency,
     [property: JsonPropertyName("modinfo")] McPingModInfoResult? ModInfo,
-    [property: JsonPropertyName("preventsChatReports")] bool? PreventsChatReports);
+    [property: JsonPropertyName("preventsChatReports")] bool? PreventsChatReports)
+{
+    /// <summary>结果来自哪种协议。</summary>
+    [JsonIgnore]
+    public McServerEdition Edition { get; init; } = McServerEdition.Java;
+}

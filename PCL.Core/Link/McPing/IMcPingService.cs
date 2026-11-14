@@ -17,7 +17,16 @@ public interface IMcPingService : IDisposable
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>服务器探测结果，如果探测失败则返回null</returns>
     Task<McPingResult?> PingAsync(CancellationToken cancellationToken = default);
-    
+
+    /// <summary>
+    /// 异步探测Minecraft服务器信息，失败时抛出带原因的异常
+    /// </summary>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>服务器探测结果</returns>
+    /// <exception cref="McPingException">连接失败、超时或服务器返回了无法识别的数据</exception>
+    /// <exception cref="OperationCanceledException"><paramref name="cancellationToken" /> 被取消</exception>
+    Task<McPingResult> QueryAsync(CancellationToken cancellationToken = default);
+
     /// <summary>
     /// 获取服务端点信息
     /// </summary>
