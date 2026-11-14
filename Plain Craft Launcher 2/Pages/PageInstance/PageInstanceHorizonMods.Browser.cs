@@ -7,6 +7,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 
 namespace PCL;
 
@@ -50,7 +51,7 @@ public partial class PageInstanceHorizonMods
         _LoadIndex(false);
     }
 
-    private void BrowseBack_Click(object sender, EventArgs e)
+    private void BrowseBack_Click(object sender, MouseButtonEventArgs e)
     {
         PanBrowse.Visibility = Visibility.Collapsed;
         PanMain.Visibility = Visibility.Visible;

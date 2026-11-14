@@ -6,6 +6,7 @@ using PCL.Core.UI.Hints;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace PCL;
 
@@ -198,7 +199,7 @@ public partial class PageInstanceHorizonPacks : IRefreshable
         Reload();
     }
 
-    private void BtnAdd_Click(object sender, EventArgs e)
+    private void BtnAdd_Click(object sender, MouseButtonEventArgs e)
     {
         var files = SystemDialogs.SelectFiles(Lang.Text("Instance.Horizon.Packs.FileFilter"), Lang.Text("Instance.Horizon.Packs.Add"));
         if (files.Length > 0) _AddFiles(files);
@@ -229,18 +230,18 @@ public partial class PageInstanceHorizonPacks : IRefreshable
 
     private static void _AddFiles(IEnumerable<string> files) => AddFilesToCurrentInstance(files);
 
-    private void BtnBrowse_Click(object sender, EventArgs e)
+    private void BtnBrowse_Click(object sender, MouseButtonEventArgs e)
     {
         // 光影与资源包的浏览在模组页的浏览视图中
         Launcher.frmInstanceLeft?.PageChange(FormMain.PageSubType.VersionMod);
         Common.RunInUi(() => Launcher.frmInstanceHorizonMods?.OpenBrowser());
     }
 
-    private void BtnOpenResource_Click(object sender, EventArgs e) => _OpenFolder(HorizonPacks.ResourcePacksDir);
+    private void BtnOpenResource_Click(object sender, MouseButtonEventArgs e) => _OpenFolder(HorizonPacks.ResourcePacksDir);
 
-    private void BtnOpenShader_Click(object sender, EventArgs e) => _OpenFolder(HorizonPacks.ShaderPacksDir);
+    private void BtnOpenShader_Click(object sender, MouseButtonEventArgs e) => _OpenFolder(HorizonPacks.ShaderPacksDir);
 
-    private void BtnRefresh_Click(object sender, EventArgs e) => Reload();
+    private void BtnRefresh_Click(object sender, MouseButtonEventArgs e) => Reload();
 
     private static void _OpenFolder(string name)
     {
@@ -276,7 +277,7 @@ public partial class PageInstanceHorizonPacks : IRefreshable
         CardDataPacks.Title = Lang.Text("Instance.Horizon.Packs.DataPacksCount", packs.Count);
     }
 
-    private void BtnAddDataPack_Click(object sender, EventArgs e)
+    private void BtnAddDataPack_Click(object sender, MouseButtonEventArgs e)
     {
         var world = SelectedWorld;
         if (world is null)
@@ -303,7 +304,7 @@ public partial class PageInstanceHorizonPacks : IRefreshable
         _ReloadDataPacks();
     }
 
-    private void BtnOpenDataPacks_Click(object sender, EventArgs e)
+    private void BtnOpenDataPacks_Click(object sender, MouseButtonEventArgs e)
     {
         var world = SelectedWorld;
         if (world is null) return;

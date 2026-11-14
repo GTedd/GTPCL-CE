@@ -7,6 +7,7 @@ using PCL.Core.UI.Hints;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace PCL;
 
@@ -246,7 +247,7 @@ public partial class PageInstanceHorizonMods : IRefreshable
         Reload();
     }
 
-    private void BtnInstall_Click(object sender, EventArgs e)
+    private void BtnInstall_Click(object sender, MouseButtonEventArgs e)
     {
         var files = SystemDialogs.SelectFiles(
             Lang.Text("Instance.Horizon.Mods.FileFilter"),
@@ -255,13 +256,13 @@ public partial class PageInstanceHorizonMods : IRefreshable
         InstallFiles(files);
     }
 
-    private void BtnBrowse_Click(object sender, EventArgs e) => OpenBrowser();
+    private void BtnBrowse_Click(object sender, MouseButtonEventArgs e) => OpenBrowser();
 
-    private void BtnOpenContent_Click(object sender, EventArgs e) => _OpenFolder(HorizonGameContent.ContentModsDir);
+    private void BtnOpenContent_Click(object sender, MouseButtonEventArgs e) => _OpenFolder(HorizonGameContent.ContentModsDir);
 
-    private void BtnOpenNative_Click(object sender, EventArgs e) => _OpenFolder(HorizonGameContent.NativeModsDir);
+    private void BtnOpenNative_Click(object sender, MouseButtonEventArgs e) => _OpenFolder(HorizonGameContent.NativeModsDir);
 
-    private void BtnRefresh_Click(object sender, EventArgs e)
+    private void BtnRefresh_Click(object sender, MouseButtonEventArgs e)
     {
         lock (_SupportCache) _SupportCache.Clear();
         Reload();
