@@ -717,7 +717,7 @@ public partial class PageDownloadInstall : IPageView
                 {
                     _vm.ShowHorizonClear = true;
                     _vm.ShowHorizonImage = true;
-                    _vm.HorizonText = _selectedHorizon.Title;
+                    _vm.HorizonText = _selectedHorizon.DisplayName;
                     _vm.HorizonForeground = ThemeManager.colorGray1;
                 }
             }
@@ -2394,7 +2394,7 @@ public partial class PageDownloadInstall : IPageView
     }
 
     /// <summary>
-    ///     可视化 Horizon 可选构建（最新 Nightly）。
+    ///     可视化 Horizon 可选构建：本平台全部可安装的版本，最新的在最上面；悬停按钮或右键可查看更新日志。
     /// </summary>
     private void Horizon_Loaded()
     {
@@ -2410,19 +2410,13 @@ public partial class PageDownloadInstall : IPageView
             CardHorizon.SwapControl = PanHorizon;
             CardHorizon.InstallMethod = stack =>
             {
-                var build = ((HorizonCandidate)stack.Tag).Build;
-                var item = new MyListItem
+                var builds = ((HorizonCandidate)stack.Tag).Builds;
+                for (var i = 0; i < builds.Count; i++)
                 {
-                    SnapsToDevicePixels = true,
-                    Height = 42d,
-                    Type = MyListItem.CheckType.Clickable,
-                    Tag = build,
-                    Logo = $"{Common.PathImage}Blocks/CommandBlock.png",
-                    Title = build.Title,
-                    Info = "Rust 重写的 Java 版，由 horizon-client 代替 Java 运行（非官方，horizon-rust/horizon）"
-                };
-                item.Click += (sender, _) => Horizon_Selected((MyListItem)sender);
-                stack.Children.Add(item);
+                    var item = DownloadUi.HorizonListItem(builds[i], i == 0, false);
+                    item.Click += (sender, _) => Horizon_Selected((MyListItem)sender);
+                    stack.Children.Add(item);
+                }
             };
         }
         catch (Exception ex)
@@ -2434,8 +2428,47 @@ public partial class PageDownloadInstall : IPageView
 
     private void Horizon_Selected(MyListItem sender)
     {
+        var build = (PCL.Core.Minecraft.Horizon.HorizonRemoteBuild)sender.Tag;
+        var candidate = HorizonInstance.DlHorizonListLoader.output;
+        // 最新版本的 Minecraft 版本已在加载列表时确认；其他版本先读它固定的 Minecraft 版本，不符时不能选
+        if (candidate is null || build.Version == candidate.Latest.Version)
+        {
+            _ApplyHorizon(build);
+            return;
+        }
+
+        var vanilla = _vanillaName;
+        Common.RunInNewThread(() =>
+        {
+            string minecraft;
+            try
+            {
+                minecraft = HorizonInstance.GetMinecraftVersion(build);
+            }
+            catch (Exception ex)
+            {
+                Common.Log(ex, $"确认 {build.DisplayName} 的 Minecraft 版本失败", Common.LogLevel.Hint,
+                    userSummary: Lang.Text("Download.Install.Horizon.CheckFailed", build.DisplayName));
+                return;
+            }
+
+            if (minecraft != vanilla)
+            {
+                HintService.Show(Hints.Error(Lang.Text("Download.Install.Horizon.WrongMinecraft", build.DisplayName, minecraft, vanilla)));
+                return;
+            }
+
+            Common.RunInUi(() =>
+            {
+                if (_vanillaName == vanilla) _ApplyHorizon(build);
+            });
+        }, "Horizon Version Check");
+    }
+
+    private void _ApplyHorizon(PCL.Core.Minecraft.Horizon.HorizonRemoteBuild build)
+    {
         SelectModLoader(ModLoaderType.Horizon);
-        _selectedHorizon = (PCL.Core.Minecraft.Horizon.HorizonRemoteBuild)sender.Tag;
+        _selectedHorizon = build;
         CardHorizon.IsSwapped = true;
         ReloadSelected();
     }

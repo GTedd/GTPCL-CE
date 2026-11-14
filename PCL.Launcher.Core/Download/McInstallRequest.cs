@@ -8,6 +8,12 @@ public class McInstallRequest
     public PCL.Core.Minecraft.Horizon.HorizonRemoteBuild? horizonBuild = null;
 
     /// <summary>
+    ///     重置 Horizon 实例且不更换版本时，保留实例里已下载的构建（不重新下载），值为实例 json 中的版本与标题。
+    ///     设置了 <see cref="horizonBuild" /> 时忽略。
+    /// </summary>
+    public (string Version, string Title)? horizonKeep = null;
+
+    /// <summary>
     ///     欲下载的 Cleanroom。
     /// </summary>
     public GameDownload.DlCleanroomListEntry? cleanroomEntry = null;

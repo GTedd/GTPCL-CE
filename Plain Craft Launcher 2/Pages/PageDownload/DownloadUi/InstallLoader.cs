@@ -80,6 +80,18 @@ public static partial class DownloadUi
                 ProgressWeight = 6,
                 block = true
             });
+        else if (request.horizonKeep is { } horizonKeep)
+            loaderList.Add(new Loading.LoaderTask<string, string>("安装 Horizon",
+                task =>
+                {
+                    HorizonInstance.Reattach(task, instanceFolder, request.targetInstanceName, minecraftName,
+                        horizonKeep.Version, horizonKeep.Title);
+                    task.output = task.input;
+                })
+            {
+                ProgressWeight = 2,
+                block = true
+            });
         loaderList.Add(_CreateDeleteIgnoreFlagLoader(instanceFolder));
         return loaderList;
     }

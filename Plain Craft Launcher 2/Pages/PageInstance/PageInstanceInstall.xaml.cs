@@ -58,6 +58,7 @@ public partial class PageInstanceInstall : IPageView
         LoadLegacyFabricApi.StateChanged += (_, _, _) => { LegacyFabricApi_Loaded(); ReloadSelected(); };
         LoadOptiFabric.StateChanged += (_, _, _) => { OptiFabric_Loaded(); ReloadSelected(); };
         LoadLabyMod.StateChanged += (_, _, _) => { LabyMod_Loaded(); ReloadSelected(); };
+        LoadHorizon.StateChanged += (_, _, _) => { Horizon_Loaded(); ReloadSelected(); };
         PageExit += () => isInSelectPage = false;
     }
 
@@ -87,6 +88,7 @@ public partial class PageInstanceInstall : IPageView
         CompDownloadLoaders.DlFabricApiLoader.Start(isForceRestart: needRefresh);
         CompDownloadLoaders.DlLegacyFabricApiLoader.Start(isForceRestart: needRefresh);
         CompDownloadLoaders.DlOptiFabricLoader.Start(isForceRestart: needRefresh);
+        HorizonInstance.DlHorizonListLoader.Start();
     }
 
     private void Init()
@@ -113,19 +115,13 @@ public partial class PageInstanceInstall : IPageView
         LoadLabyMod.State = GameDownload.DlLabyModListLoader;
         LoadLegacyFabric.State = GameDownload.DlLegacyFabricListLoader;
         LoadLegacyFabricApi.State = CompDownloadLoaders.DlLegacyFabricApiLoader;
+        LoadHorizon.State = HorizonInstance.DlHorizonListLoader;
     }
 
     #region 安装
 
     private void BtnSelectStart_Click(object sender, MouseButtonEventArgs mouseButtonEventArgs)
     {
-        // Horizon 实例由 horizon-client 运行，修改加载器会重写实例 json 并丢失 Horizon 信息
-        if (HorizonInstance.IsHorizon(PageInstanceLeft.McInstance))
-        {
-            HintService.Show(Hints.Info("Horizon 实例不支持修改加载器，如需更新 Horizon 请重新安装一个 Horizon 实例。"));
-            return;
-        }
-
         // Quilt 实例无法通过安装管线重装/修改（已移除 Quilt 安装支持）
         if (PageInstanceLeft.McInstance.Info.HasQuilt)
         {
@@ -174,6 +170,17 @@ public partial class PageInstanceInstall : IPageView
             selectedLegacyFabricApi = null;
         if (selectedOptiFabric?.Equals(_currentOptiFabric) == true)
             selectedOptiFabric = null;
+        // Horizon：选了列表中的版本就下载它；保持实例原来的版本时，列表里还有就重新下载，
+        // 已经不在列表里（归档的 Nightly 7 天后会从 GitHub 删除）就保留实例里现有的构建
+        PCL.Core.Minecraft.Horizon.HorizonRemoteBuild? horizonBuild = null;
+        (string Version, string Title)? horizonKeep = null;
+        if (_selectedLoaderType == ModLoaderType.Horizon && _selectedHorizonVersion is not null)
+        {
+            horizonBuild = _selectedHorizon ?? HorizonInstance.DlHorizonListLoader.output?.Builds
+                .FirstOrDefault(build => build.Version == _selectedHorizonVersion);
+            if (horizonBuild is null) horizonKeep = (_selectedHorizonVersion, _selectedHorizonTitle ?? _selectedHorizonVersion);
+        }
+
         // 提交安装申请
         var request = new McInstallRequest
         {
@@ -194,7 +201,9 @@ public partial class PageInstanceInstall : IPageView
             labyModChannel = selectedLabyModChannel,
             labyModCommitRef = selectedLabyModCommitRef,
             legacyFabricVersion = selectedLegacyFabric,
-            legacyFabricApi = selectedLegacyFabricApi
+            legacyFabricApi = selectedLegacyFabricApi,
+            horizonBuild = horizonBuild,
+            horizonKeep = horizonKeep
         };
         _vm.CanStartInstall = false;
         if (!DownloadUi.McInstall(request, _installAction == InstallAction.Modify ? Lang.Text("Instance.Install.Action.ModifyLabel") : Lang.Text("Common.Action.Reset")))
@@ -273,6 +282,7 @@ public partial class PageInstanceInstall : IPageView
         CardLabyMod.IsSwapped = true;
         CardLegacyFabric.IsSwapped = true;
         CardLegacyFabricApi.IsSwapped = true;
+        CardHorizon.IsSwapped = true;
 
         if (!(bool)States.Hint.InstallPageBack)
         {
@@ -319,6 +329,7 @@ public partial class PageInstanceInstall : IPageView
                 LegacyFabricApi_Loaded();
                 LabyMod_Loaded();
                 OptiFabric_Loaded();
+                Horizon_Loaded();
                 ReloadSelected();
             }, after: true),
             Animations.AaOpacity(PanSelect, 1d - PanSelect.Opacity, 250, 150),
@@ -353,6 +364,8 @@ public partial class PageInstanceInstall : IPageView
                     new Binding("Foreground") { Source = CardLabyMod.MainTextBlock, Mode = BindingMode.OneWay });
                 BtnOptiFabricClearInner.SetBinding(Shape.FillProperty,
                     new Binding("Foreground") { Source = CardOptiFabric.MainTextBlock, Mode = BindingMode.OneWay });
+                BtnHorizonClearInner.SetBinding(Shape.FillProperty,
+                    new Binding("Foreground") { Source = CardHorizon.MainTextBlock, Mode = BindingMode.OneWay });
             }, after: true)
         }, "FrmInstanceInstall SelectPageSwitch", true);
     }
@@ -459,6 +472,12 @@ public partial class PageInstanceInstall : IPageView
 
     // OptiFabric
     private Comp.CompFile? selectedOptiFabric;
+
+    // Horizon：实例里装的版本；选中的版本（签名版本与标题），从列表选中时才有对应的构建
+    private (string Version, string Title)? _currentHorizon;
+    private string? _selectedHorizonVersion;
+    private string? _selectedHorizonTitle;
+    private PCL.Core.Minecraft.Horizon.HorizonRemoteBuild? _selectedHorizon;
 
     private bool _ReloadSelected_Ongoing; // #3742 中，LoadOptiFineGetError 会初始化 LoadOptiFine，触发事件 LoadOptiFine.StateChanged，导致再次调用 SelectReload
 
@@ -794,6 +813,36 @@ public partial class PageInstanceInstall : IPageView
             }
         }
 
+        // Horizon：Horizon 实例总是显示（列表加载失败时也能看到当前版本）；其他实例在 Minecraft 版本相符时显示
+        var horizonCandidate = HorizonInstance.DlHorizonListLoader.output;
+        if (_currentHorizon is null && (horizonCandidate is null || horizonCandidate.Minecraft != _vanillaName))
+        {
+            _vm.ShowHorizonCard = false;
+        }
+        else
+        {
+            _vm.ShowHorizonCard = true;
+            var horizonError = LoadHorizonGetError();
+            CardHorizon.MainSwap.Visibility = horizonError is null ? Visibility.Visible : Visibility.Collapsed;
+            if (horizonError is not null)
+                CardHorizon.IsSwapped = true;
+            SetPanelVisibility(PanHorizonInfo, CardHorizon.IsSwapped);
+            if (_selectedHorizonVersion is null)
+            {
+                _vm.ShowHorizonClear = false;
+                _vm.ShowHorizonImage = false;
+                _vm.HorizonText = horizonError ?? Lang.Text("Download.Install.State.CanAdd");
+                _vm.HorizonForeground = ThemeManager.colorGray4;
+            }
+            else
+            {
+                _vm.ShowHorizonClear = true;
+                _vm.ShowHorizonImage = true;
+                _vm.HorizonText = _HorizonCardText();
+                _vm.HorizonForeground = ThemeManager.colorGray1;
+            }
+        }
+
         // OptiFabric
         if (selectedFabric is null || selectedOptiFine is null)
         {
@@ -901,6 +950,9 @@ public partial class PageInstanceInstall : IPageView
         selectedLabyModChannel = null;
         selectedLegacyFabric = null;
         selectedLegacyFabricApi = null;
+        _selectedHorizon = null;
+        _selectedHorizonVersion = null;
+        _selectedHorizonTitle = null;
     }
 
     /// <summary>
@@ -947,6 +999,13 @@ public partial class PageInstanceInstall : IPageView
             selectedLabyModVersion = null;
         }
 
+        if (loaderType != ModLoaderType.Horizon)
+        {
+            _selectedHorizon = null;
+            _selectedHorizonVersion = null;
+            _selectedHorizonTitle = null;
+        }
+
         _selectedLoaderType = loaderType;
         selectedAPIName = null;
     }
@@ -985,7 +1044,10 @@ public partial class PageInstanceInstall : IPageView
             selectedCleanroom?.VersionName ?? VersionOrNull(selectedCleanroomVersion),
             selectedLabyModVersion,
             selectedOptiFine?.DisplayName.Replace(_vanillaName + " ", ""),
-            selectedLiteLoader is not null);
+            selectedLiteLoader is not null,
+            _selectedHorizonVersion is null
+                ? null
+                : _HorizonShortName(_selectedHorizonVersion, _selectedHorizonTitle ?? _selectedHorizonVersion));
     }
 
     /// <summary>
@@ -1083,6 +1145,13 @@ public partial class PageInstanceInstall : IPageView
         _vm.CanStartInstall = true;
         var currentInstance = PageInstanceLeft.McInstance.Info;
         _vanillaName = currentInstance.VanillaName;
+        _currentHorizon = HorizonInstance.ReadInstalled(PageInstanceLeft.McInstance);
+        if (_currentHorizon is { } installedHorizon)
+        {
+            _selectedLoaderType = ModLoaderType.Horizon;
+            _selectedHorizonVersion = installedHorizon.Version;
+            _selectedHorizonTitle = installedHorizon.Title;
+        }
         if (currentInstance.HasLiteLoader)
             selectedLiteLoader = new GameDownload.DlLiteLoaderListEntry { Inherit = currentInstance.VanillaName };
         if (currentInstance.HasOptiFine)
@@ -1363,7 +1432,7 @@ public partial class PageInstanceInstall : IPageView
     /// </summary>
     private string LoadOptiFineGetError()
     {
-        if (_selectedLoaderType is ModLoaderType.NeoForge or ModLoaderType.LabyMod or ModLoaderType.Cleanroom)
+        if (_selectedLoaderType is ModLoaderType.NeoForge or ModLoaderType.LabyMod or ModLoaderType.Cleanroom or ModLoaderType.Horizon)
             return Lang.Text("Download.Install.Compat.IncompatibleWithLoader", _selectedLoaderType);
         if (LoadOptiFine is null || LoadOptiFine.State.LoadingState == LoadingState.Run)
             return Lang.Text("Download.Install.State.Loading");
@@ -1512,7 +1581,7 @@ public partial class PageInstanceInstall : IPageView
         // 检查 Loader
         if (GetLoaderError(LoadLiteLoader) is not null)
             return GetLoaderError(LoadLiteLoader);
-        if (_selectedLoaderType is ModLoaderType.NeoForge or ModLoaderType.LegacyFabric or ModLoaderType.LabyMod or ModLoaderType.Cleanroom)
+        if (_selectedLoaderType is ModLoaderType.NeoForge or ModLoaderType.LegacyFabric or ModLoaderType.LabyMod or ModLoaderType.Cleanroom or ModLoaderType.Horizon)
             return Lang.Text("Download.Install.Compat.IncompatibleWithLoader", _selectedLoaderType);
         // 检查版本
         return GameDownload.DlLiteLoaderListLoader.output.Value.Any(v => (v.Inherit ?? "") == (_vanillaName ?? ""))
@@ -2590,6 +2659,160 @@ public partial class PageInstanceInstall : IPageView
 
         selectedAPIName = null;
         CardLabyMod.IsSwapped = true;
+        e.Handled = true;
+        ReloadSelected();
+    }
+
+    #endregion
+
+    #region Horizon 列表
+
+    /// <summary>
+    ///     获取 Horizon 的加载异常信息。若正常则返回 null。
+    /// </summary>
+    private string? LoadHorizonGetError()
+    {
+        if (LoadHorizon is null || LoadHorizon.State.LoadingState == LoadingState.Run)
+            return Lang.Text("Download.Install.State.Loading");
+        if (LoadHorizon.State.LoadingState == LoadingState.Error)
+            return Lang.Text("Download.Install.State.GetVersionListFailed", ((Loading.LoaderBase)LoadHorizon.State).Error.Message);
+        if (GetLoaderError(LoadHorizon) is not null)
+            return GetLoaderError(LoadHorizon);
+        if (selectedOptiFine is not null)
+            return Lang.Text("Download.Install.Compat.IncompatibleWithOptiFine");
+        if (_selectedLoaderType is not null && _selectedLoaderType != ModLoaderType.Horizon)
+            return Lang.Text("Download.Install.Compat.IncompatibleWithLoader", _selectedLoaderType);
+        if (selectedLiteLoader is not null)
+            return Lang.Text("Download.Install.Compat.IncompatibleWithLiteLoader");
+        var candidate = HorizonInstance.DlHorizonListLoader.output;
+        return candidate is not null && candidate.Minecraft == _vanillaName
+            ? null
+            : Lang.Text("Download.Install.State.NoVersion");
+    }
+
+    /// <summary>Nightly 用发布标题，正式版为“Horizon 0.2.97”。</summary>
+    private static string _HorizonDisplayName(string version, string title) =>
+        version.StartsWith("nightly-", StringComparison.Ordinal) ? title : "Horizon " + version.TrimStart('v');
+
+    /// <summary>实例描述里“Horizon”之后的部分：Nightly 用发布标题，正式版为版本号。</summary>
+    private static string _HorizonShortName(string version, string title) =>
+        version.StartsWith("nightly-", StringComparison.Ordinal) ? title : version.TrimStart('v');
+
+    /// <summary>卡片上的版本名；保持实例原来的版本且有更新的版本时，一并提示可以更新到哪个版本。</summary>
+    private string _HorizonCardText()
+    {
+        var name = _HorizonDisplayName(_selectedHorizonVersion!, _selectedHorizonTitle ?? _selectedHorizonVersion!);
+        var builds = HorizonInstance.DlHorizonListLoader.output?.Builds;
+        if (builds is null || builds.Count == 0 || _currentHorizon is not { } current || _selectedHorizonVersion != current.Version)
+            return name;
+        var index = -1;
+        for (var i = 0; i < builds.Count; i++)
+            if (builds[i].Version == current.Version)
+            {
+                index = i;
+                break;
+            }
+
+        return index == 0 ? name : Lang.Text("Instance.Install.Horizon.UpdateAvailable", name, builds[0].DisplayName);
+    }
+
+    private void CardHorizon_PreviewSwap(object sender, Common.RouteEventArgs e)
+    {
+        if (LoadHorizonGetError() is not null)
+            e.handled = true;
+    }
+
+    /// <summary>
+    ///     可视化 Horizon 版本列表：本平台全部可安装的版本，标出最新与当前使用的版本；悬停按钮或右键可查看更新日志。
+    /// </summary>
+    private void Horizon_Loaded()
+    {
+        try
+        {
+            if (LoadHorizon.State.LoadingState == LoadingState.Run)
+                return;
+            var candidate = HorizonInstance.DlHorizonListLoader.output;
+            PanHorizon.Children.Clear();
+            if (candidate is null)
+                return;
+            PanHorizon.Tag = candidate;
+            CardHorizon.SwapControl = PanHorizon;
+            CardHorizon.InstallMethod = stack =>
+            {
+                var builds = ((HorizonCandidate)stack.Tag).Builds;
+                for (var i = 0; i < builds.Count; i++)
+                {
+                    var item = DownloadUi.HorizonListItem(builds[i], i == 0, builds[i].Version == _currentHorizon?.Version);
+                    item.Click += (sender, _) => Horizon_Selected((MyListItem)sender);
+                    stack.Children.Add(item);
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            Common.Log(ex, "可视化 Horizon 版本列表出错", Common.LogLevel.Feedback,
+                userSummary: Lang.Text("Instance.Install.Error.OperationFailed"));
+        }
+    }
+
+    private void Horizon_Selected(MyListItem sender)
+    {
+        var build = (PCL.Core.Minecraft.Horizon.HorizonRemoteBuild)sender.Tag;
+        var candidate = HorizonInstance.DlHorizonListLoader.output;
+        // 最新版本与实例原来的版本不用再确认；其他版本先读它固定的 Minecraft 版本，不符时不能选
+        if (candidate is null || build.Version == candidate.Latest.Version || build.Version == _currentHorizon?.Version)
+        {
+            _ApplyHorizon(build);
+            return;
+        }
+
+        var vanilla = _vanillaName;
+        Common.RunInNewThread(() =>
+        {
+            string minecraft;
+            try
+            {
+                minecraft = HorizonInstance.GetMinecraftVersion(build);
+            }
+            catch (Exception ex)
+            {
+                Common.Log(ex, $"确认 {build.DisplayName} 的 Minecraft 版本失败", Common.LogLevel.Hint,
+                    userSummary: Lang.Text("Download.Install.Horizon.CheckFailed", build.DisplayName));
+                return;
+            }
+
+            if (minecraft != vanilla)
+            {
+                HintService.Show(Hints.Error(Lang.Text("Download.Install.Horizon.WrongMinecraft", build.DisplayName, minecraft, vanilla)));
+                return;
+            }
+
+            Common.RunInUi(() =>
+            {
+                if (_vanillaName == vanilla) _ApplyHorizon(build);
+            });
+        }, "Horizon Version Check");
+    }
+
+    private void _ApplyHorizon(PCL.Core.Minecraft.Horizon.HorizonRemoteBuild build)
+    {
+        SelectModLoader(ModLoaderType.Horizon);
+        _selectedHorizon = build;
+        _selectedHorizonVersion = build.Version;
+        _selectedHorizonTitle = build.Title;
+        CardHorizon.IsSwapped = true;
+        ReloadSelected();
+    }
+
+    private void Horizon_Clear(object sender, MouseButtonEventArgs e)
+    {
+        _selectedHorizon = null;
+        _selectedHorizonVersion = null;
+        _selectedHorizonTitle = null;
+        if (_selectedLoaderType == ModLoaderType.Horizon)
+            _selectedLoaderType = null;
+        selectedAPIName = null;
+        CardHorizon.IsSwapped = true;
         e.Handled = true;
         ReloadSelected();
     }

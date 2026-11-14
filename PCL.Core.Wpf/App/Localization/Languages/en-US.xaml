@@ -90,6 +90,7 @@
     <sys:String x:Key="Common.Installation.Forge">Forge</sys:String>
     <sys:String x:Key="Common.Installation.Iris">Iris</sys:String>
     <sys:String x:Key="Common.Installation.LabyMod">LabyMod</sys:String>
+    <sys:String x:Key="Common.Installation.Horizon">Horizon</sys:String>
     <sys:String x:Key="Common.Installation.LegacyFabric">Legacy Fabric</sys:String>
     <sys:String x:Key="Common.Installation.LegacyFabricApi">Legacy Fabric API</sys:String>
     <sys:String x:Key="Common.Installation.LiteLoader">LiteLoader</sys:String>
@@ -698,6 +699,21 @@
     <!-- Download.Install.State -->
 
     <sys:String x:Key="Download.Install.State.CanAdd">Installable</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Latest">Latest</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Current">In use</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.NightlyRolling">Nightly build, replaced by each new one</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.NightlyArchived">Archived nightly build, kept on GitHub for 7 days</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.CheckFailed">Could not find which Minecraft version {0} is for. Try again later.</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.WrongMinecraft">{0} is for Minecraft {1} and cannot be installed on Minecraft {2}.</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.Title">{0} changelog</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.Empty">This version has no changelog.</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.Translate">Translate</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.OpenGitHub">View on GitHub</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.Translating">Translating the {0} changelog ({1} parts)…</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.TranslatingProgress">Translating the {0} changelog: {1}/{2}</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.TranslatedTitle">{0} changelog (machine translation)</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.ShowOriginal">Show original</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.TranslateFailed">Could not translate the changelog. Try again later.</sys:String>
     <sys:String x:Key="Download.Install.State.GetFailed">Failed to get version list: {0}</sys:String>
     <sys:String x:Key="Download.Install.State.GetVersionListFailed">Failed to get version list: {0}</sys:String>
     <sys:String x:Key="Download.Install.State.Getting">Obtaining...</sys:String>
@@ -837,6 +853,7 @@
     <sys:String x:Key="Instance.Install.Action.StartReset">Reset</sys:String>
     <sys:String x:Key="Instance.Install.Error.OperationFailed">An instance installation operation failed. See the details below.</sys:String>
     <sys:String x:Key="Instance.Install.NoExtraInstall">No extra installation</sys:String>
+    <sys:String x:Key="Instance.Install.Horizon.UpdateAvailable">{0} (update available: {1})</sys:String>
     <sys:String x:Key="Instance.Install.Reset.Message">You are resetting the current instance.&#xA;PCL CE will re-download the files required for this instance from the internet and reinstall mod loaders (if any).&#xA;This operation will not lose your saves, mods, resource packs, etc.</sys:String>
     <sys:String x:Key="Instance.Install.Reset.Title">Reset this instance</sys:String>
 

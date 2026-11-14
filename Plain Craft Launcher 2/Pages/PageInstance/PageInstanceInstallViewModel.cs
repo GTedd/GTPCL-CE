@@ -18,7 +18,8 @@ public partial class PageInstanceInstallViewModel : ViewModelBase
         string? Cleanroom,
         string? LabyMod,
         string? OptiFine,
-        bool HasLiteLoader);
+        bool HasLiteLoader,
+        string? Horizon = null);
 
     [ObservableProperty] private string? _selectedTitle = "";
 
@@ -162,6 +163,16 @@ public partial class PageInstanceInstallViewModel : ViewModelBase
 
     [ObservableProperty] private Brush _optiFabricForeground = ThemeManager.colorGray1;
 
+    [ObservableProperty] private bool _showHorizonCard;
+
+    [ObservableProperty] private bool _showHorizonClear = true;
+
+    [ObservableProperty] private bool _showHorizonImage = true;
+
+    [ObservableProperty] private string? _horizonText = "";
+
+    [ObservableProperty] private Brush _horizonForeground = ThemeManager.colorGray1;
+
     public static string GetVersionTypeTitle(string key) => key switch
     {
         "正式版" => Lang.Text("Download.Version.Type.Release"),
@@ -173,6 +184,8 @@ public partial class PageInstanceInstallViewModel : ViewModelBase
 
     public static string? GetSelectLogo(LoaderSelection selection, string? vanillaIcon)
     {
+        if (selection.Horizon is not null) return "pack://application:,,,/images/Blocks/CommandBlock.png";
+
         if (selection.Fabric is not null) return "pack://application:,,,/images/Blocks/Fabric.png";
 
         if (selection.LegacyFabric is not null) return "pack://application:,,,/images/Blocks/Fabric.png";
@@ -207,7 +220,8 @@ public partial class PageInstanceInstallViewModel : ViewModelBase
             ("Common.Installation.NeoForge", selection.NeoForge),
             ("Common.Installation.Cleanroom", selection.Cleanroom),
             ("Common.Installation.LabyMod", selection.LabyMod),
-            ("Common.Installation.OptiFine", selection.OptiFine)
+            ("Common.Installation.OptiFine", selection.OptiFine),
+            ("Common.Installation.Horizon", selection.Horizon)
         };
 
         parts.AddRange(

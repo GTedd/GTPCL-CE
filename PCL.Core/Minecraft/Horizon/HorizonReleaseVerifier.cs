@@ -15,7 +15,8 @@ namespace PCL.Core.Minecraft.Horizon;
 ///     （docs/api/launch-guide.md 与 crates/horizon-release-sign）：
 ///     <c>SHA256SUMS</c> 列出每个压缩包的 SHA-256，签名文件每行一个 base64 Ed25519 签名，
 ///     签名内容为 <c>horizon release &lt;版本&gt;\n</c> 后接 <c>SHA256SUMS</c> 的原始字节。
-///     Nightly 用 <c>SHA256SUMS.v2.sig</c>，版本取自发布标题（nightly-日期-提交）。
+///     Nightly 用 <c>SHA256SUMS.v2.sig</c>，版本取自发布标题（nightly-日期-提交）；
+///     正式版（v0.2.x）用 <c>SHA256SUMS.sig</c>，版本为标签本身（如 <c>v0.2.97</c>）。
 /// </summary>
 public static partial class HorizonReleaseVerifier
 {
@@ -29,6 +30,7 @@ public static partial class HorizonReleaseVerifier
 
     public const string SumsFileName = "SHA256SUMS";
     public const string NightlySignatureFileName = "SHA256SUMS.v2.sig";
+    public const string ReleaseSignatureFileName = "SHA256SUMS.sig";
 
     [GeneratedRegex(@"^Nightly (\d{4}-\d{2}-\d{2}) · ([0-9a-f]{7,40})$")]
     private static partial Regex NightlyTitleRegex();

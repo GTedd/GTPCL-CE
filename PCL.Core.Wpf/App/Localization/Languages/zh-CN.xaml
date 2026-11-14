@@ -90,6 +90,7 @@
     <sys:String x:Key="Common.Installation.Forge">Forge</sys:String>
     <sys:String x:Key="Common.Installation.Iris">Iris</sys:String>
     <sys:String x:Key="Common.Installation.LabyMod">LabyMod</sys:String>
+    <sys:String x:Key="Common.Installation.Horizon">Horizon</sys:String>
     <sys:String x:Key="Common.Installation.LegacyFabric">Legacy Fabric</sys:String>
     <sys:String x:Key="Common.Installation.LegacyFabricApi">Legacy Fabric API</sys:String>
     <sys:String x:Key="Common.Installation.LiteLoader">LiteLoader</sys:String>
@@ -698,6 +699,21 @@
     <!-- Download.Install.State -->
 
     <sys:String x:Key="Download.Install.State.CanAdd">可以添加</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Latest">最新</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Current">当前使用</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.NightlyRolling">每日构建，随新版本滚动更新</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.NightlyArchived">已归档的每日构建，GitHub 只保留 7 天</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.CheckFailed">无法确认 {0} 对应的 Minecraft 版本，请稍后重试。</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.WrongMinecraft">{0} 对应 Minecraft {1}，不能装在 Minecraft {2} 上。</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.Title">{0} 更新日志</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.Empty">这个版本没有更新日志。</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.Translate">翻译</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.OpenGitHub">在 GitHub 查看</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.Translating">正在翻译 {0} 的更新日志（共 {1} 段）……</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.TranslatingProgress">正在翻译 {0} 的更新日志：{1}/{2}</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.TranslatedTitle">{0} 更新日志（机器翻译）</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.ShowOriginal">查看原文</sys:String>
+    <sys:String x:Key="Download.Install.Horizon.Changelog.TranslateFailed">翻译更新日志失败，请稍后重试。</sys:String>
     <sys:String x:Key="Download.Install.State.GetFailed">获取失败：{0}</sys:String>
     <sys:String x:Key="Download.Install.State.GetVersionListFailed">获取版本列表失败：{0}</sys:String>
     <sys:String x:Key="Download.Install.State.Getting">获取中……</sys:String>
@@ -837,6 +853,7 @@
     <sys:String x:Key="Instance.Install.Action.StartReset">开始重置</sys:String>
     <sys:String x:Key="Instance.Install.Error.OperationFailed">实例安装操作失败。请查看错误详情。</sys:String>
     <sys:String x:Key="Instance.Install.NoExtraInstall">无附加安装</sys:String>
+    <sys:String x:Key="Instance.Install.Horizon.UpdateAvailable">{0}（可更新到 {1}）</sys:String>
     <sys:String x:Key="Instance.Install.Reset.Message">你正在重置当前实例。&#xA;PCL CE 将会重新联网下载该实例所需的文件，并重新安装模组加载器（如有）。&#xA;此操作不会丢失你的存档、模组、资源包等。</sys:String>
     <sys:String x:Key="Instance.Install.Reset.Title">重置此实例</sys:String>
 
