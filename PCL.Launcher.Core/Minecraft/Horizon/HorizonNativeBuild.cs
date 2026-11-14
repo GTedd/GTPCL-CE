@@ -402,9 +402,7 @@ public static class HorizonNativeBuild
         {
             0 => MixinsRevision,
             1 => pins[0],
-            _ => pins.Append(MixinsRevision).Distinct()
-                .OrderByDescending(rev => _CommitSha(job, MixinsRepository, rev, host.Token).Date, StringComparer.Ordinal)
-                .First()
+            _ => _NewestMixins(job, pins, host.Token)
         };
 
         (job.CargoProfile, var extra) = job.Profile switch
@@ -871,6 +869,38 @@ public static class HorizonNativeBuild
         if (job.Bundles.Any(b => b.Manifest.Horizon != job.Revision))
             sb.Append($"\n\n部分模组是为其他 Horizon 版本制作的（当前编译 {job.HorizonShort()}），这可能是失败原因：请安装为同一 Nightly 制作的版本。");
         return new InvalidOperationException(sb.ToString());
+    }
+
+    /// <summary>
+    ///     模组钉住的 horizon-mixins 版本不一致时，取提交时间最新的一个（连同启动器内置的版本一起比较）。
+    ///     查不到时间的版本跳过并记进日志；一个都查不到时才失败。
+    /// </summary>
+    private static string _NewestMixins(Job job, IReadOnlyList<string> pins, CancellationToken token)
+    {
+        var dated = new List<(string Rev, string Date)>();
+        var failures = new List<string>();
+        foreach (var rev in pins.Append(MixinsRevision).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var (_, date) = _CommitSha(job, MixinsRepository, rev, token);
+                if (date.Length == 0) throw new InvalidDataException("没有提交时间");
+                dated.Add((rev, date));
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                failures.Add($"{rev[..Math.Min(7, rev.Length)]}: {ex.Message}");
+                job.Write($"Cannot date horizon-mixins {rev}: {ex.Message}");
+            }
+        }
+
+        if (dated.Count == 0)
+            throw new InvalidOperationException(
+                "打开的原生模组钉住了不同的 horizon-mixins 版本，但查不到这些版本的先后：\n" + string.Join("\n", failures) +
+                "\n\n请检查网络后重试。");
+        var newest = dated.OrderByDescending(x => x.Date, StringComparer.Ordinal).First().Rev;
+        job.Write($"horizon-mixins pins {string.Join(", ", dated.Select(x => $"{x.Rev[..7]}@{x.Date}"))} -> {newest[..7]}");
+        return newest;
     }
 
     private static (string Sha, string Date) _CommitSha(Job job, string repository, string reference, CancellationToken token)
