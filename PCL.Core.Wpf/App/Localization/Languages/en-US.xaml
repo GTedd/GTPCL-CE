@@ -1173,7 +1173,7 @@
     <sys:String x:Key="Instance.Resource.Install.FileDialog.ResourcePack.Title">Select resource packs to install</sys:String>
     <sys:String x:Key="Instance.Resource.Install.FileDialog.Schematic.Filter">Schematic files (*.litematic;*.nbt;*.schematic;*.schem)|*.litematic;*.nbt;*.schematic;*.schem</sys:String>
     <sys:String x:Key="Instance.Resource.Install.FileDialog.Schematic.Title">Select schematics to install</sys:String>
-    <sys:String x:Key="Instance.Resource.Install.FileDialog.Shader.Filter">Shader pack files (*.zip)|*.zip</sys:String>
+    <sys:String x:Key="Instance.Resource.Install.FileDialog.Shader.Filter">Shader pack files (*.zip;*.hshader)|*.zip;*.hshader</sys:String>
     <sys:String x:Key="Instance.Resource.Install.FileDialog.Shader.Title">Select shader packs to install</sys:String>
 
     <!-- Instance.Resource.Item -->
@@ -3803,29 +3803,4 @@
     <sys:String x:Key="Instance.Horizon.Browser.Installed">Installed {0} {1}: it loads at the next start.</sys:String>
     <sys:String x:Key="Instance.Horizon.Browser.InstalledNative">Installed {0} {1}. Press Build on the Mods page to compile it into the game.</sys:String>
     <sys:String x:Key="Instance.Horizon.Browser.InstallFailed">Can't install {0}: {1}</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Title">Horizon shader, resource and data packs</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Tip">One shader pack is on at a time (horizon-graphics.txt); a resource pack turned on goes on top (options.txt); data packs are per world (datapacks.json). While the game runs, change them in its own menus.</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Add">Add shader or resource pack</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Browse">Browse Horizon packs</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.OpenResource">Resource packs folder</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.OpenShader">Shader packs folder</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Shaders">Shader packs</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.ShadersCount">Shader packs ({0})</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.ShadersEmpty">None yet: drop a .hshader or a shaders/ pack .zip here.</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Resources">Resource packs</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.ResourcesCount">Resource packs ({0})</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.ResourcesEmpty">None yet: drop a resource pack .zip here.</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.DataPacks">Data packs</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.DataPacksCount">Data packs ({0})</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.DataPacksEmpty">This world has no data packs yet.</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.NoWorld">No worlds yet: open a world once, then manage its data packs.</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.AddDataPack">Add data pack</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.OpenDataPacks">Data packs folder</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.FileFilter">Shader or resource packs(*.hshader;*.zip)|*.hshader;*.zip</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.DataPackFilter">Data packs(*.zip)|*.zip</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Added">Added {0}: turn it on below.</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.DataPackAdded">Added {0}: the game turns it on when the world opens.</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.GameRunning">Horizon is running: change packs in its own menus, or here once it is closed.</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.On">{0} is on</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Off">{0} is off</sys:String>
 </ResourceDictionary>

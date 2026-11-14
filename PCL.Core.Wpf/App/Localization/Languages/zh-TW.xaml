@@ -1138,7 +1138,7 @@
     <sys:String x:Key="Instance.Resource.Install.FileDialog.ResourcePack.Title">選擇要安裝的資源包</sys:String>
     <sys:String x:Key="Instance.Resource.Install.FileDialog.Schematic.Filter">投影原理圖檔案(*.litematic;*.nbt;*.schematic;*.schem)|*.litematic;*.nbt;*.schematic;*.schem</sys:String>
     <sys:String x:Key="Instance.Resource.Install.FileDialog.Schematic.Title">選擇要安裝的投影原理圖</sys:String>
-    <sys:String x:Key="Instance.Resource.Install.FileDialog.Shader.Filter">光影包檔案(*.zip)|*.zip</sys:String>
+    <sys:String x:Key="Instance.Resource.Install.FileDialog.Shader.Filter">光影包檔案(*.zip;*.hshader)|*.zip;*.hshader</sys:String>
     <sys:String x:Key="Instance.Resource.Install.FileDialog.Shader.Title">選擇要安裝的光影包</sys:String>
 
     <!-- Instance.Resource.Item -->
@@ -3695,29 +3695,4 @@
     <sys:String x:Key="Instance.Horizon.Browser.Installed">已安裝 {0} {1}，下次啟動遊戲時生效。</sys:String>
     <sys:String x:Key="Instance.Horizon.Browser.InstalledNative">已安裝 {0} {1}。請在模組頁點擊“建置”把它編譯進遊戲。</sys:String>
     <sys:String x:Key="Instance.Horizon.Browser.InstallFailed">無法安裝 {0}：{1}</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Title">Horizon 光影、資源包與資料包</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Tip">光影包同一時間只能使用一個（horizon-graphics.txt）；資源包開啟後放在最上層（options.txt）；資料包按存檔設定（datapacks.json）。遊戲執行時請在遊戲內修改。</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Add">添加光影或資源包</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Browse">瀏覽 Horizon 資源</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.OpenResource">資源包資料夾</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.OpenShader">光影包資料夾</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Shaders">光影包</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.ShadersCount">光影包（{0}）</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.ShadersEmpty">還沒有光影包：把 .hshader 或 shaders/ 格式的 .zip 拖到這裡。</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Resources">資源包</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.ResourcesCount">資源包（{0}）</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.ResourcesEmpty">還沒有資源包：把資源包 .zip 拖到這裡。</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.DataPacks">資料包</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.DataPacksCount">資料包（{0}）</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.DataPacksEmpty">這個存檔還沒有資料包。</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.NoWorld">還沒有存檔：進入一次世界後再管理資料包。</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.AddDataPack">添加資料包</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.OpenDataPacks">資料包資料夾</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.FileFilter">光影包或資源包(*.hshader;*.zip)|*.hshader;*.zip</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.DataPackFilter">資料包(*.zip)|*.zip</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Added">已添加 {0}，在下方開啟即可使用。</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.DataPackAdded">已添加 {0}，進入存檔時生效。</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.GameRunning">Horizon 正在執行：請在遊戲內切換，或關閉遊戲後再修改。</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.On">已開啟 {0}</sys:String>
-    <sys:String x:Key="Instance.Horizon.Packs.Off">已關閉 {0}</sys:String>
 </ResourceDictionary>

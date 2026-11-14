@@ -76,14 +76,12 @@ public partial class PageInstanceLeft : IRefreshable, IPageView
                 }
             case FormMain.PageSubType.VersionResourcePack:
                 {
-                    if (_IsHorizon) Launcher.frmInstanceHorizonPacks?.Reload();
-                    else PageInstanceCompResource.Refresh(Comp.CompType.ResourcePack);
+                    PageInstanceCompResource.Refresh(Comp.CompType.ResourcePack);
                     break;
                 }
             case FormMain.PageSubType.VersionShader:
                 {
-                    if (_IsHorizon) Launcher.frmInstanceHorizonPacks?.Reload();
-                    else PageInstanceCompResource.Refresh(Comp.CompType.Shader);
+                    PageInstanceCompResource.Refresh(Comp.CompType.Shader);
                     break;
                 }
             case FormMain.PageSubType.VersionSchematic:
@@ -215,15 +213,8 @@ public partial class PageInstanceLeft : IRefreshable, IPageView
                     return Launcher.frmInstanceScreenshot;
                 }
             case FormMain.PageSubType.VersionResourcePack:
-            case FormMain.PageSubType.VersionShader when _IsHorizon:
                 {
-                    // Horizon 的光影、资源包与数据包按它自己的规则开关，合在一页
-                    if (_IsHorizon)
-                    {
-                        Launcher.frmInstanceHorizonPacks ??= new PageInstanceHorizonPacks();
-                        return Launcher.frmInstanceHorizonPacks;
-                    }
-
+                    // Horizon 实例的资源包与光影包和其他加载器一样，用通用的资源页（光影页另认 .hshader）
                     Launcher.frmInstanceResourcePack ??= new PageInstanceCompResource(Comp.CompType.ResourcePack);
                     return Launcher.frmInstanceResourcePack;
                 }

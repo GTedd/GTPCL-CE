@@ -38,8 +38,13 @@ public static partial class LocalComp
                 CompType.Mod =>
                     IsModFile(path),
 
-                CompType.ResourcePack or CompType.Shader =>
+                CompType.ResourcePack =>
                     path.EndsWithF(".zip", true),
+
+                // .hshader 是 Horizon 自己的光影包
+                CompType.Shader =>
+                    path.EndsWithF(".zip", true)
+                    || path.EndsWithF(".hshader", true),
 
                 CompType.DataPack =>
                     path.EndsWithF(".zip", true)

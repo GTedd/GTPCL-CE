@@ -1078,7 +1078,7 @@ public partial class PageInstanceCompResource : IRefreshable, IPageView, ILocalM
                 }
             case Comp.CompType.Shader:
                 {
-                    validExtensions = new[] { "zip" };
+                    validExtensions = new[] { "zip", "hshader" };
                     compTypeName = Lang.Text("Download.Comp.Type.Shader");
                     if (string.IsNullOrEmpty(targetFolderPath))
                         compFolder = targetInstance.PathIndie + @"shaderpacks\";

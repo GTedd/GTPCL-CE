@@ -62,7 +62,6 @@ public static partial class Launcher
     public static PageInstanceCompResource? frmInstanceMod;
     public static PageInstanceModDisabled? frmInstanceModDisabled;
     public static PageInstanceHorizonMods? frmInstanceHorizonMods;
-    public static PageInstanceHorizonPacks? frmInstanceHorizonPacks;
     public static PageInstanceCompJarInJar? frmInstanceModJarInJar;
     public static PageInstanceScreenshot? frmInstanceScreenshot;
     public static PageInstanceSaves? frmInstanceSaves;

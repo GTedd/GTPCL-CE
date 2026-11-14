@@ -2,6 +2,7 @@ using System.Globalization;
 using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
+using PCL.Core.Minecraft.Horizon;
 using PCL.Core.Utils;
 
 namespace PCL;
@@ -20,7 +21,33 @@ public static partial class LocalComp
                 _TryExtractResourcePackIcon(jar);
             }
 
+            _TryParseHorizonShaderManifest(jar);
             _NormalizeVersionFromManifest(jar);
+        }
+
+        /// <summary>
+        ///     Horizon 光影包（<c>.hshader</c>）：从 <c>horizon-shaders.toml</c> 读名称、版本与简介，列表里不再只显示文件名。
+        /// </summary>
+        private void _TryParseHorizonShaderManifest(ZipArchive jar)
+        {
+            try
+            {
+                var entry = jar.GetEntry(HorizonPacks.ShaderManifest);
+                if (entry is null || entry.Length > 1024 * 1024)
+                    return;
+                using var reader = new StreamReader(entry.Open(), Encoding.UTF8);
+                var table = HorizonToml.Parse(reader.ReadToEnd());
+                if (HorizonToml.GetString(table, "name") is { Length: > 0 } name)
+                    _name = name;
+                if (HorizonToml.GetString(table, "version") is { Length: > 0 } version)
+                    _version = version;
+                if (HorizonToml.GetString(table, "description") is { Length: > 0 } description)
+                    _description = description;
+            }
+            catch (Exception ex)
+            {
+                LauncherCommon.Log(ex, $"读取 horizon-shaders.toml 失败（{path}）", LauncherLogLevel.Developer);
+            }
         }
 
         private void _TryParseMcmodInfo(ZipArchive jar)

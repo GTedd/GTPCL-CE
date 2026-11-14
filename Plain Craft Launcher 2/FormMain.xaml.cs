@@ -1100,8 +1100,8 @@ public partial class FormMain
 
             if (extension == "hshader")
             {
-                Common.Log("[System] 文件为 hshader 格式，作为 Horizon 光影包添加");
-                PageInstanceHorizonPacks.AddFilesToCurrentInstance(filePathList);
+                Common.Log("[System] 文件为 hshader 格式，作为光影包安装");
+                PageInstanceCompResource.InstallCompFiles(filePathList, Comp.CompType.Shader);
                 return;
             }
 
