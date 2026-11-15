@@ -149,6 +149,10 @@ public static class HorizonInstance
         return (version, data?["title"]?.ToString() is { Length: > 0 } title ? title : version);
     }
 
+    /// <summary>模组注册表索引的本地缓存（浏览器与原生构建的编译前检查共用）。</summary>
+    public static string RegistryIndexCacheFile =>
+        Path.Combine(LauncherPaths.ExecutableDirectory, "PCL", "Horizon", "horizon-index.json");
+
     public static string Dir(string instanceFolder) => Path.Combine(instanceFolder, "horizon");
     public static string BuildDir(string instanceFolder) => Path.Combine(Dir(instanceFolder), "build");
     public static string ResourcesDir(string instanceFolder) => Path.Combine(Dir(instanceFolder), "resources");

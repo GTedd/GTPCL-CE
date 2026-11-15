@@ -211,6 +211,13 @@ public static class HorizonNativeBuild
         public string Native => Path.Combine(BuildRoot, "native");
         public List<HorizonNativeBundle> Bundles { get; } = [];
         public List<HorizonNativeLeftOut> LeftOut { get; } = [];
+
+        /// <summary>玩家在构建前选择不编入的模组（为其他 Horizon 版本制作、可能编译不过的）。</summary>
+        public HashSet<string> Skip { get; } = new(StringComparer.Ordinal);
+
+        /// <summary>每个模组文件的 SHA-256，用于对照注册表与记录编译失败。</summary>
+        public Dictionary<string, string?> Sha256 { get; } = new(StringComparer.Ordinal);
+
         public string Revision { get; set; } = "";
         public string Mixins { get; set; } = MixinsRevision;
         public int? SupportedHooks { get; set; }
@@ -243,13 +250,16 @@ public static class HorizonNativeBuild
     ///     开始构建实例的原生模组，返回加入任务列表的加载器。同一时间只能有一个构建。
     /// </summary>
     /// <exception cref="InvalidOperationException">已有构建在进行。</exception>
-    public static Loading.LoaderCombo<int> StartBuild(McInstance instance, HorizonNativeProfile profile, Action<Loading.LoaderBase>? onStateChanged)
+    /// <param name="skip">不编入的模组 id（玩家在构建前选择跳过的、为其他 Horizon 版本制作的模组）。</param>
+    public static Loading.LoaderCombo<int> StartBuild(McInstance instance, HorizonNativeProfile profile, Action<Loading.LoaderBase>? onStateChanged,
+        IReadOnlyCollection<string>? skip = null)
     {
         var target = HorizonNativeTarget.Of(instance);
         if (Interlocked.CompareExchange(ref _building, 1, 0) != 0)
             throw new InvalidOperationException("已经有一个原生构建在进行，请等它结束后再试。");
 
         var job = new Job(target, profile);
+        if (skip is not null) job.Skip.UnionWith(skip);
         Loading.LoaderTask<int, int> Step(string name, Action<Job, IHorizonNativeHost> run, double weight) =>
             new(name, task => run(job, new LoaderHost(task))) { ProgressWeight = weight, block = true };
 
@@ -391,6 +401,31 @@ public static class HorizonNativeBuild
                 _LeaveOut(job, bundle, "unsupported", null, "它使用了 [api] 扩展接口，本启动器暂不支持编译这类模组");
             else if (bundle.Manifest.Hooks is { } hooks && job.SupportedHooks is { } supported && hooks > supported)
                 _LeaveOut(job, bundle, "other-version", null, $"需要钩子版本 {hooks}，当前 Horizon 只有 {supported}，请更新 Horizon");
+        }
+
+        // 编译前检查：注册表记录在这个提交上编译不过的、本机编译这个文件失败过的，直接跳过，不再白白编译几分钟；
+        // 为其他提交制作的模组，玩家在构建前选择了跳过的也不编入
+        var index = TryLoadRegistryIndex(host.Token);
+        var failures = HorizonNativeFitCheck.ReadFailures(FailuresPath(job.InstanceFolder));
+        foreach (var bundle in job.Bundles.ToList())
+        {
+            var sha = _Sha256(bundle.Path);
+            job.Sha256[bundle.Id] = sha;
+            var fit = _Fit(bundle.Manifest, sha, job.Revision, job.SupportedHooks, index, failures);
+            switch (fit.Kind)
+            {
+                case HorizonNativeFitKind.Broken:
+                    _LeaveOut(job, bundle, "broken", fit.Code,
+                        $"{(fit.FromRegistry ? "模组注册表记录" : "本机上次编译时发现")}它在 Horizon {job.HorizonShort()} 上编译不过（{fit.Code}）" +
+                        (fit.Suggested is { } better ? $"，注册表中的 {better} 版本适配当前 Horizon" : ""));
+                    break;
+                case HorizonNativeFitKind.OtherVersion when job.Skip.Contains(bundle.Id):
+                    _LeaveOut(job, bundle, "other-version", null, $"为 Horizon {_Short(fit.Pin)} 制作，按选择不编入");
+                    break;
+                case HorizonNativeFitKind.OtherVersion:
+                    job.Write($"{bundle.Id} {bundle.Version} was made for Horizon {_Short(fit.Pin)}; trying it on {job.HorizonShort()}");
+                    break;
+            }
         }
 
         if (job.Bundles.Count == 0)
@@ -584,6 +619,8 @@ public static class HorizonNativeBuild
                 if (exit != 0)
                 {
                     var (culprit, code, oneLine) = _MixinsDiagnostic(job, tail);
+                    if (culprit is not null && code is not null && code != "E_MODULE_CONFLICT")
+                        _RecordFailure(job, culprit, code, oneLine);
                     if (culprit is not null && attempt < CompileRetries && job.Bundles.Count > 1)
                     {
                         _LeaveOut(job, culprit, code == "E_MODULE_CONFLICT" ? "clash" : "other-version", null, oneLine);
@@ -640,6 +677,7 @@ public static class HorizonNativeBuild
             };
             var progress = new HorizonRustToolchain.CargoProgress();
             var errors = new List<string>();
+            var allErrors = new List<string>();
             var started = Stopwatch.StartNew();
             var (buildExit, _, buildTail) = _Run(job, HorizonRustToolchain.CargoExe(job.BuildRoot), arguments,
                 lowPriority: true, host.Token,
@@ -657,8 +695,11 @@ public static class HorizonNativeBuild
                         var json = JsonNode.Parse(line);
                         if (json?["reason"]?.GetValue<string>() != "compiler-message") return null;
                         var rendered = json["message"]?["rendered"]?.GetValue<string>();
-                        if (json["message"]?["level"]?.GetValue<string>() == "error" && rendered is not null && errors.Count < 4)
-                            errors.Add(rendered.TrimEnd());
+                        if (json["message"]?["level"]?.GetValue<string>() == "error" && rendered is not null)
+                        {
+                            if (errors.Count < 4) errors.Add(rendered.TrimEnd());
+                            if (allErrors.Count < 64) allErrors.Add(rendered);
+                        }
                         return rendered?.TrimEnd();
                     }
                     catch (Exception)
@@ -667,7 +708,30 @@ public static class HorizonNativeBuild
                     }
                 },
                 extraEnvironment: environment);
-            if (buildExit != 0) throw _Failure(job, "编译游戏", buildExit, buildTail, errors);
+            if (buildExit != 0)
+            {
+                // rustc 报错的代码来自哪个模组：记下（下次构建前就跳过），还有别的模组时跳过它重新编译
+                var culprit = HorizonNativeFitCheck.FindCompileCulprit(allErrors,
+                    job.Bundles.Select(b => (b.Id, (IReadOnlyDictionary<string, byte[]>)b.Files)));
+                if (culprit is { } found && job.Bundles.FirstOrDefault(b => b.Id == found.Id) is { } bad)
+                {
+                    var firstLine = allErrors.Select(e => e.Split('\n')[0].Trim()).FirstOrDefault() ?? found.Code;
+                    _RecordFailure(job, bad, found.Code, firstLine);
+                    var reason = $"它的代码在 Horizon {job.HorizonShort()} 上编译不过（{found.Code}）";
+                    if (attempt < CompileRetries && job.Bundles.Count > 1)
+                    {
+                        _LeaveOut(job, bad, "broken", found.Code, reason + "，已跳过它重新编译");
+                        _StageBundles(job);
+                        if (job.AlreadyBuilt) return;
+                        continue;
+                    }
+
+                    throw _Failure(job, "编译游戏", buildExit, buildTail, errors,
+                        $"{bad.Id} {bad.Version}：{reason}。已记下，下次构建前会直接跳过它；请换用为 Horizon {job.HorizonShort()} 制作的版本。");
+                }
+
+                throw _Failure(job, "编译游戏", buildExit, buildTail, errors);
+            }
             job.Write($"Built in {started.Elapsed.TotalSeconds:0} s ({job.Profile}, {profile})");
 
             var targetDir = Path.Combine(job.Native, "target", profile);
@@ -813,6 +877,139 @@ public static class HorizonNativeBuild
 
     private static string HorizonShort(this Job job) => job.Revision.Length >= 7 ? job.Revision[..7] : job.Revision;
 
+    private static string _Short(string? revision) => revision is null ? "?" : revision.Length >= 7 ? revision[..7] : revision;
+
+    /// <summary>本机的原生模组编译失败记录（<c>versions\&lt;实例&gt;\horizon\native-failures.json</c>）。</summary>
+    public static string FailuresPath(string instanceFolder) =>
+        Path.Combine(HorizonInstance.Dir(instanceFolder), HorizonNativeFitCheck.FailuresFileName);
+
+    /// <summary>
+    ///     读取模组注册表索引，用于编译前检查（注册表的 <c>broken_on</c>）。20 秒内拿不到时用本地缓存，都没有时返回 null（只是少一项检查）。
+    /// </summary>
+    public static HorizonRegistryIndex? TryLoadRegistryIndex(CancellationToken token = default)
+    {
+        try
+        {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+            timeout.CancelAfter(TimeSpan.FromSeconds(20));
+            return HorizonRegistry.GetIndexAsync(HorizonInstance.Http, HorizonInstance.RegistryIndexCacheFile, false, timeout.Token)
+                .GetAwaiter().GetResult();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !token.IsCancellationRequested)
+        {
+            LauncherCommon.Log(ex, "[Horizon] 读取模组注册表失败");
+            try
+            {
+                if (File.Exists(HorizonInstance.RegistryIndexCacheFile))
+                    return HorizonRegistryIndex.Parse(File.ReadAllText(HorizonInstance.RegistryIndexCacheFile));
+            }
+            catch (Exception cacheEx) when (cacheEx is IOException or InvalidDataException or UnauthorizedAccessException)
+            {
+                LauncherCommon.Log(cacheEx, "[Horizon] 读取模组注册表缓存失败");
+            }
+
+            return null;
+        }
+    }
+
+    /// <summary>
+    ///     模组页用：实例里每个原生模组文件能否在所玩的 Horizon 上编译（键为文件路径）。会读模组注册表，请在后台线程调用。
+    /// </summary>
+    public static Dictionary<string, HorizonNativeFit> CheckFits(McInstance instance, int? playedHooks, CancellationToken token = default)
+    {
+        var result = new Dictionary<string, HorizonNativeFit>(StringComparer.OrdinalIgnoreCase);
+        var folder = instance.PathInstance.TrimEnd('\\');
+        var version = instance.JsonObject?[HorizonInstance.DataKey]?["version"]?.ToString();
+        var dir = HorizonGameContent.NativeModsPath(instance.PathIndie.TrimEnd('\\'));
+        if (string.IsNullOrEmpty(version) || !Directory.Exists(dir)) return result;
+
+        var played = _PlayedRevision(version, folder);
+        var failures = HorizonNativeFitCheck.ReadFailures(FailuresPath(folder));
+        HorizonRegistryIndex? index = null;
+        var indexRead = false;
+        foreach (var file in _NativeFiles(dir))
+        {
+            HorizonModInfo info;
+            try
+            {
+                info = HorizonModFile.Read(file);
+            }
+            catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
+            {
+                continue;
+            }
+
+            if (info.Native is not { } manifest) continue;
+            if (!indexRead)
+            {
+                index = TryLoadRegistryIndex(token);
+                indexRead = true;
+            }
+
+            result[Path.GetFullPath(file)] = _Fit(manifest, _Sha256(file), played, playedHooks, index, failures);
+        }
+
+        return result;
+    }
+
+    /// <summary>所玩 Horizon 的提交：Nightly 取版本号末尾的短提交号；正式版的标签查编译缓存里解析过的提交，查不到就用标签。</summary>
+    private static string _PlayedRevision(string version, string instanceFolder)
+    {
+        var reference = version[(version.LastIndexOf('-') + 1)..];
+        if (version.StartsWith("nightly-", StringComparison.Ordinal)) return reference;
+        try
+        {
+            var cache = Path.Combine(BuildRoot(instanceFolder), "native", "commit-cache.json");
+            if (File.Exists(cache) && JsonNode.Parse(File.ReadAllText(cache))?[$"{HorizonRepository}@{reference}"]?["sha"]?.GetValue<string>() is
+                    { Length: 40 } sha)
+                return sha;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            LauncherCommon.Log(ex, "[Horizon] 读取提交缓存失败");
+        }
+
+        return reference;
+    }
+
+    private static HorizonNativeFit _Fit(HorizonNativeManifest manifest, string? sha256, string played, int? hooks,
+        HorizonRegistryIndex? index, IReadOnlyCollection<HorizonNativeFailure> failures)
+    {
+        var fit = HorizonNativeFitCheck.Check(manifest, sha256, played, hooks,
+            HorizonNativeFitCheck.RegistryVersion(index, manifest.Id, manifest.Version, sha256), failures);
+        if (fit.Kind != HorizonNativeFitKind.Fits &&
+            HorizonNativeFitCheck.FittingVersion(index, manifest.Id, played, hooks, manifest.Version) is { } better)
+            fit = fit with { Suggested = better.Version };
+        return fit;
+    }
+
+    private static string? _Sha256(string file)
+    {
+        try
+        {
+            return HorizonReleaseVerifier.Sha256OfFile(file);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    private static void _RecordFailure(Job job, HorizonNativeBundle bundle, string code, string message)
+    {
+        try
+        {
+            HorizonNativeFitCheck.RecordFailure(FailuresPath(job.InstanceFolder), new HorizonNativeFailure(
+                bundle.Id, bundle.Version, job.Sha256.GetValueOrDefault(bundle.Id) ?? _Sha256(bundle.Path), job.Revision, code, message,
+                DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")));
+            job.Write($"Recorded: {bundle.Id} {bundle.Version} does not build on {job.HorizonShort()} ({code})");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            LauncherCommon.Log(ex, "[Horizon] 写入原生模组编译失败记录失败");
+        }
+    }
+
     private static void _LeaveOut(Job job, HorizonNativeBundle bundle, string why, string? with, string reason)
     {
         job.Bundles.Remove(bundle);
@@ -826,6 +1023,7 @@ public static class HorizonNativeBuild
         "clash" => $"{left.Id}：与其他模组冲突",
         "needs" => $"{left.Id}：依赖的模组未编入",
         "unsupported" => $"{left.Id}：使用了暂不支持的 [api] 接口",
+        "broken" => $"{left.Id}：已知无法在当前 Horizon 上编译（{left.With}）",
         _ => $"{left.Id}：为其他 Horizon 版本制作"
     };
 

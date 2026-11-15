@@ -20,7 +20,7 @@ public partial class PageInstanceHorizonMods
     private int _browseVersion;
 
     private static string IndexCacheFile =>
-        Path.Combine(LauncherPaths.ExecutableDirectory, "PCL", "Horizon", "horizon-index.json");
+        HorizonInstance.RegistryIndexCacheFile;
 
     /// <summary>切换到浏览视图。</summary>
     public void OpenBrowser()

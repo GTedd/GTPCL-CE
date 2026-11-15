@@ -58,7 +58,7 @@ public partial class PageInstanceHorizonMods
         var lines = new List<string> { text };
         if (status.State == HorizonNativeState.UpToDate && status.Record is { LeftOut.Count: > 0 } record)
             lines.Add(Lang.Text("Instance.Horizon.Native.LeftOut",
-                string.Join("、", record.LeftOut.Select(l => $"{l.Id} {l.Version}（{_LeftOutReason(l.Why)}）"))));
+                string.Join("、", record.LeftOut.Select(l => $"{l.Id} {l.Version}（{_LeftOutReason(l)}）"))));
         lines.AddRange(status.Problems.Select(p => Lang.Text("Instance.Horizon.Mods.Unreadable", p)));
 
         PanNativeBuild.Children.Add(new TextBlock
@@ -119,8 +119,9 @@ public partial class PageInstanceHorizonMods
         PanNativeBuild.Children.Add(buttons);
     }
 
-    private static string _LeftOutReason(string why) => why switch
+    private static string _LeftOutReason(HorizonNativeLeftOut left) => left.Why switch
     {
+        "broken" => Lang.Text("Instance.Horizon.Native.Why.Broken", left.With ?? "-"),
         "clash" => Lang.Text("Instance.Horizon.Native.Why.Clash"),
         "needs" => Lang.Text("Instance.Horizon.Native.Why.Needs"),
         "unsupported" => Lang.Text("Instance.Horizon.Native.Why.Unsupported"),
@@ -135,21 +136,47 @@ public partial class PageInstanceHorizonMods
             return;
         }
 
+        // 编译前检查（模组列表上已标出）：已知编译不过的直接跳过；为其他 Horizon 版本制作的由玩家决定是否尝试
+        var enabledNative = _mods.Where(m => m.InNativeFolder && m.Enabled).ToList();
+        string Label(HorizonInstalledMod m) => $"· {m.Info?.Name ?? m.Id} {m.Info?.Version}".TrimEnd();
+        var broken = enabledNative.Where(m => _FitOf(m)?.Kind == HorizonNativeFitKind.Broken).ToList();
+        var risky = enabledNative.Where(m => _FitOf(m)?.Kind == HorizonNativeFitKind.OtherVersion).ToList();
+        if (enabledNative.Count > 0 && broken.Count == enabledNative.Count)
+        {
+            HintService.Show(Hints.Error(Lang.Text("Instance.Horizon.Native.Check.NothingToBuild")));
+            return;
+        }
+
         // 每次构建前都提醒：原生模组以玩家的权限运行，不在沙盒里
         var mods = string.Join("\n", status.Enabled.Select(m => $"· {m.Id} {m.Version}"));
         var buildRoot = HorizonNativeBuild.BuildRoot(instance);
         var firstTime = !HorizonRustToolchain.IsInstalled(buildRoot);
         var content = Lang.Text("Instance.Horizon.Native.ConfirmMessage", mods) +
                       (firstTime ? "\n\n" + Lang.Text("Instance.Horizon.Native.FirstBuild", buildRoot) : "");
-        if ((DialogService.Instance.Show(new TextDialogRequest
-            {
-                Title = Lang.Text("Instance.Horizon.Native.ConfirmTitle"),
-                Content = content,
-                Buttons = DialogButtons.Create("Instance.Horizon.Native.ConfirmBuild", "Common.Action.Cancel"),
-                IsWarn = true,
-                ForceWait = true
-            }).Result?.Button ?? 0) != 1)
+        if (broken.Count > 0)
+            content += "\n\n" + Lang.Text("Instance.Horizon.Native.Check.Skip",
+                string.Join("\n", broken.Select(m => $"{Label(m)}（{_FitOf(m)!.Code}）")));
+        if (risky.Count > 0)
+            content += "\n\n" + Lang.Text("Instance.Horizon.Native.Check.Risky", _PlayedShort(),
+                string.Join("\n", risky.Select(m => $"{Label(m)}（{_ShortRevision(_FitOf(m)!.Pin)}）")));
+        var choice = DialogService.Instance.Show(new TextDialogRequest
+        {
+            Title = Lang.Text("Instance.Horizon.Native.ConfirmTitle"),
+            Content = content,
+            Buttons = risky.Count > 0
+                ? DialogButtons.Create("Instance.Horizon.Native.Check.BuildAnyway", "Instance.Horizon.Native.Check.SkipRisky", "Common.Action.Cancel")
+                : DialogButtons.Create("Instance.Horizon.Native.ConfirmBuild", "Common.Action.Cancel"),
+            IsWarn = true,
+            ForceWait = true
+        }).Result?.Button ?? 0;
+        var cancel = risky.Count > 0 ? 3 : 2;
+        if (choice == 0 || choice == cancel) return;
+        var skip = risky.Count > 0 && choice == 2 ? risky.Select(m => m.Id).ToList() : null;
+        if (skip is not null && broken.Count + skip.Count >= enabledNative.Count)
+        {
+            HintService.Show(Hints.Error(Lang.Text("Instance.Horizon.Native.Check.NothingToBuild")));
             return;
+        }
 
         try
         {
@@ -169,7 +196,7 @@ public partial class PageInstanceHorizonMods
 
                     if (state.State is LoadState.Finished or LoadState.Failed or LoadState.Aborted)
                         Common.RunInUi(() => Launcher.frmInstanceHorizonMods?.Reload());
-                });
+                }, skip);
             Loading.LoaderTaskbarAdd(loader);
             Launcher.frmMain!.BtnExtraDownload.ShowRefresh();
             Launcher.frmMain.BtnExtraDownload.Ribble();

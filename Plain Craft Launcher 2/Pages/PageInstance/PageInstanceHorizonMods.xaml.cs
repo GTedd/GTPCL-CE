@@ -23,6 +23,9 @@ public partial class PageInstanceHorizonMods : IRefreshable
     private HorizonContentSupport _support = HorizonContentSupport.Unknown;
     private List<HorizonInstalledMod> _mods = [];
 
+    /// <summary>原生模组能否在所玩的 Horizon 上编译（键为文件完整路径），在后台算好后刷新列表。</summary>
+    private Dictionary<string, HorizonNativeFit> _fits = new(StringComparer.OrdinalIgnoreCase);
+
     public PageInstanceHorizonMods()
     {
         InitializeComponent();
@@ -67,7 +70,66 @@ public partial class PageInstanceHorizonMods : IRefreshable
                 _Render();
                 ReloadNativeBuild();
             });
+
+            // 编译前检查要读模组注册表，可能要等一会儿：列表先显示，结果出来后再标上
+            if (!mods.Any(m => m.InNativeFolder)) return;
+            Dictionary<string, HorizonNativeFit> fits;
+            try
+            {
+                fits = HorizonNativeBuild.CheckFits(instance, support.NativeHooks);
+            }
+            catch (Exception ex)
+            {
+                Common.Log(ex, "[Horizon] 检查原生模组适配情况失败");
+                return;
+            }
+
+            Common.RunInUi(() =>
+            {
+                if (version != _reloadVersion) return;
+                _fits = fits;
+                _Render();
+            });
         }, "Horizon Mods Reload");
+    }
+
+    private HorizonNativeFit? _FitOf(HorizonInstalledMod mod)
+    {
+        if (!mod.InNativeFolder) return null;
+        try
+        {
+            return _fits.GetValueOrDefault(Path.GetFullPath(mod.Path));
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>所玩 Horizon 的短版本：Nightly 为提交号前 7 位，正式版为标签。</summary>
+    private static string _PlayedShort()
+    {
+        var version = HorizonInstance.ReadInstalled(Instance)?.Version ?? "-";
+        return version.StartsWith("nightly-", StringComparison.Ordinal) ? version[(version.LastIndexOf('-') + 1)..] : version;
+    }
+
+    private static string _ShortRevision(string? revision) =>
+        revision is null ? "-" : revision.Length >= 7 ? revision[..7] : revision;
+
+    /// <summary>原生模组不能直接编译的原因；能编译时返回 null。</summary>
+    private static string? _FitText(HorizonNativeFit? fit)
+    {
+        if (fit is null) return null;
+        var text = fit.Kind switch
+        {
+            HorizonNativeFitKind.Broken => Lang.Text(fit.FromRegistry ? "Instance.Horizon.Native.Fit.Broken" : "Instance.Horizon.Native.Fit.BrokenLocal",
+                _PlayedShort(), fit.Code ?? "-"),
+            HorizonNativeFitKind.OtherVersion => Lang.Text("Instance.Horizon.Native.Fit.OtherVersion", _ShortRevision(fit.Pin), _PlayedShort()),
+            HorizonNativeFitKind.NeedsNewer => Lang.Text("Instance.Horizon.Mods.NeedsNewerHorizon", fit.Needs ?? 0, fit.Has ?? 0),
+            _ => null
+        };
+        if (text is not null && fit.Suggested is { } better) text += Lang.Text("Instance.Horizon.Native.Fit.Suggest", better);
+        return text;
     }
 
     /// <summary>
@@ -144,6 +206,15 @@ public partial class PageInstanceHorizonMods : IRefreshable
         if (!string.IsNullOrEmpty(info?.Version)) tags.Add(info.Version);
         if (info?.Kind == HorizonModKind.ContentAndNative) tags.Add(Lang.Text("Instance.Horizon.Mods.Tag.Combined"));
         if (mod.Error is not null) tags.Add(Lang.Text("Instance.Horizon.Mods.Tag.Error"));
+        switch (_FitOf(mod)?.Kind)
+        {
+            case HorizonNativeFitKind.Broken:
+                tags.Add(Lang.Text("Instance.Horizon.Mods.Tag.Broken"));
+                break;
+            case HorizonNativeFitKind.OtherVersion:
+                tags.Add(Lang.Text("Instance.Horizon.Mods.Tag.OtherVersion"));
+                break;
+        }
         item.PlainTags = tags;
 
         item.Changed += (_, e) =>
@@ -167,6 +238,7 @@ public partial class PageInstanceHorizonMods : IRefreshable
         if (mod.InNativeFolder)
         {
             var native = info.Native!;
+            if (_FitText(_FitOf(mod)) is { } problem) return problem;
             if (!_support.SupportsNativeHooks(native.Hooks))
                 return Lang.Text("Instance.Horizon.Mods.NeedsNewerHorizon", native.Hooks!, _support.NativeHooks!);
             return Lang.Text("Instance.Horizon.Mods.NativeInfo", native.Game, native.Horizon[..7],

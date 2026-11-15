@@ -3735,6 +3735,8 @@
     <sys:String x:Key="Instance.Horizon.Mods.SupportUnknown">无法读取当前构建支持的内容（构建较旧或文件缺失）。</sys:String>
     <sys:String x:Key="Instance.Horizon.Mods.Tag.Combined">内容+原生</sys:String>
     <sys:String x:Key="Instance.Horizon.Mods.Tag.Error">无法读取</sys:String>
+    <sys:String x:Key="Instance.Horizon.Mods.Tag.Broken">无法编译</sys:String>
+    <sys:String x:Key="Instance.Horizon.Mods.Tag.OtherVersion">版本不符</sys:String>
     <sys:String x:Key="Instance.Horizon.Mods.ShowInFolder">在文件夹中显示</sys:String>
     <sys:String x:Key="Instance.Horizon.Mods.Remove">删除</sys:String>
     <sys:String x:Key="Instance.Horizon.Mods.Unreadable">无法读取：{0}</sys:String>
@@ -3772,6 +3774,18 @@
     <sys:String x:Key="Instance.Horizon.Native.Why.Needs">依赖的模组未编入</sys:String>
     <sys:String x:Key="Instance.Horizon.Native.Why.Unsupported">使用了暂不支持的 [api] 接口</sys:String>
     <sys:String x:Key="Instance.Horizon.Native.Why.OtherVersion">为其他 Horizon 版本制作</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Why.Broken">已知无法在当前 Horizon 上编译：{0}</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Fit.Broken">模组注册表记录它无法在当前 Horizon（{0}）上编译（{1}），构建时会自动跳过。</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Fit.BrokenLocal">上次在当前 Horizon（{0}）上编译失败（{1}），构建时会自动跳过；换用其他版本的文件后会重新尝试。</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Fit.OtherVersion">为 Horizon {0} 制作，当前是 {1}：可能无法编译，构建前会询问是否尝试。</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Fit.Suggest"> 注册表中的 {0} 版本适配当前 Horizon，可在“浏览”中安装。</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Check.Skip">以下模组已知无法在当前 Horizon 上编译，这次构建会跳过：
+{0}</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Check.Risky">以下模组是为其他 Horizon 版本制作的（当前 {0}），可能编译失败。可以仍然编译试试，或者这次跳过它们：
+{1}</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Check.BuildAnyway">仍然编译</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Check.SkipRisky">跳过这些模组</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Check.NothingToBuild">打开的原生模组都无法在当前 Horizon 上编译，请换用适配的版本或更新 Horizon。</sys:String>
     <sys:String x:Key="Instance.Horizon.Native.ConfirmTitle">构建原生模组</sys:String>
     <sys:String x:Key="Instance.Horizon.Native.ConfirmMessage">原生模组不在沙盒中运行，编译进游戏后拥有这台电脑的完整权限。请只构建你信任的模组：
 {0}</sys:String>

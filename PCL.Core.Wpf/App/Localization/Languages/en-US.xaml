@@ -3734,6 +3734,8 @@
     <sys:String x:Key="Instance.Horizon.Mods.SupportUnknown">Can't read what this build loads (an older build or missing files).</sys:String>
     <sys:String x:Key="Instance.Horizon.Mods.Tag.Combined">Content + native</sys:String>
     <sys:String x:Key="Instance.Horizon.Mods.Tag.Error">Unreadable</sys:String>
+    <sys:String x:Key="Instance.Horizon.Mods.Tag.Broken">Won't build</sys:String>
+    <sys:String x:Key="Instance.Horizon.Mods.Tag.OtherVersion">Other version</sys:String>
     <sys:String x:Key="Instance.Horizon.Mods.ShowInFolder">Show in folder</sys:String>
     <sys:String x:Key="Instance.Horizon.Mods.Remove">Remove</sys:String>
     <sys:String x:Key="Instance.Horizon.Mods.Unreadable">Unreadable: {0}</sys:String>
@@ -3771,6 +3773,18 @@
     <sys:String x:Key="Instance.Horizon.Native.Why.Needs">needs a mod that was left out</sys:String>
     <sys:String x:Key="Instance.Horizon.Native.Why.Unsupported">uses the [api] interface, not supported yet</sys:String>
     <sys:String x:Key="Instance.Horizon.Native.Why.OtherVersion">made for another Horizon version</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Why.Broken">known not to build on this Horizon: {0}</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Fit.Broken">The mod registry found it doesn't build on this Horizon ({0}, {1}). Builds leave it out.</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Fit.BrokenLocal">It failed to build on this Horizon ({0}, {1}) last time. Builds leave it out until you replace the file.</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Fit.OtherVersion">Made for Horizon {0}, you play {1}: it may not build. You'll be asked before building.</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Fit.Suggest"> Version {0} in the registry builds on it: install it from Browse.</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Check.Skip">These mods are known not to build on this Horizon and will be left out:
+{0}</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Check.Risky">These mods were made for other Horizon versions (you play {0}) and may not build. Build anyway, or leave them out this time:
+{1}</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Check.BuildAnyway">Build anyway</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Check.SkipRisky">Leave them out</sys:String>
+    <sys:String x:Key="Instance.Horizon.Native.Check.NothingToBuild">None of the native mods turned on builds on this Horizon. Install versions made for it, or update Horizon.</sys:String>
     <sys:String x:Key="Instance.Horizon.Native.ConfirmTitle">Build native mods</sys:String>
     <sys:String x:Key="Instance.Horizon.Native.ConfirmMessage">Native mods are not sandboxed: compiled into the game, they have full access to this computer. Only build mods you trust:
 {0}</sys:String>
