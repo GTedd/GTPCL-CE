@@ -853,8 +853,12 @@ public partial class FormMain
                 Comp.CompClipboard.GetClipboardResource();
             if (pageCurrent == PageType.InstanceSetup && PageCurrentSub == PageSubType.VersionMod)
             {
-                // Mod 管理自动刷新
-                Launcher.frmInstanceMod.ReloadCompFileList();
+                // Mod 管理自动刷新；Horizon 实例用自己的模组页（frmInstanceMod 为空），
+                // 在 horizon-mods / horizon-native-mods 里放入模组后切回窗口即可看到
+                if (HorizonInstance.IsHorizon(PageInstanceLeft.McInstance))
+                    Launcher.frmInstanceHorizonMods?.Reload();
+                else
+                    Launcher.frmInstanceMod?.ReloadCompFileList();
             }
             else if (pageCurrent == PageType.InstanceSetup && PageCurrentSub == PageSubType.VersionResourcePack)
             {
